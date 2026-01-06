@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Telegram Test Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+<h2>Mini App ishlayapti 🚀</h2>
+<p>Agar buni ko‘rsang — GitHub Pages tayyor</p>
+
+<button onclick="send()">Botga signal yuborish</button>
+
+<script>
+function send() {
+  Telegram.WebApp.sendData(JSON.stringify({
+    status: "ok",
+    from: "mini_app"
+  }));
+}
+</script>
+
+</body>
+</html>
