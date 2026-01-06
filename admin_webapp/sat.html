@@ -9,20 +9,15 @@
 
 <h2>👑 Test yaratish</h2>
 
-<!-- Admin test kodini kiritadi -->
 <input id="code" placeholder="Test kodi" />
 <br><br>
-
-<!-- Savollar sonini kiritish -->
 <input id="count" type="number" placeholder="Savollar soni" />
 <br><br>
 
-<!-- Saqlash tugmasi -->
 <button onclick="save()">Saqlash</button>
 
 <script>
 function save() {
-  // Telegram botga admin tomonidan kiritilgan ma'lumot yuboriladi
   Telegram.WebApp.sendData(JSON.stringify({
     role: "admin",
     test_code: document.getElementById("code").value,
