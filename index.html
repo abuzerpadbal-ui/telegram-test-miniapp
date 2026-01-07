@@ -1,54 +1,95 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <title>Testni Boshlash</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 15px; background: #f5f5f5; }
-    h2 { text-align: center; }
-    input, button, textarea { width: 100%; padding: 10px; margin: 6px 0; }
-  </style>
+<meta charset="UTF-8">
+<title>📝 Mijoz Test Mini App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  body { font-family: Arial; background: #fff8dc; padding: 15px; }
+  h2 { text-align:center; color: #333399; }
+  .question-box { background:#f0f0f0; padding:12px; margin:12px 0; border-radius:8px; }
+  input[type="radio"], input[type="checkbox"] { margin-right:5px; }
+  textarea { width:100%; padding:8px; margin:5px 0; border-radius:5px; }
+  button { width:100%; padding:10px; margin:8px 0; background:#1e90ff; color:#fff; border:none; font-weight:bold; border-radius:5px; cursor:pointer; }
+  button:hover { background:#1c86ee; }
+  #progress { font-weight:bold; margin-bottom:10px; }
+</style>
 </head>
 <body>
+<h2>📝 Testni boshlash</h2>
 
-<h2>🧪 Testni boshlash</h2>
-
-<!-- 1-Bosqich: ism va familiya -->
-<div id="userForm">
-  <input id="userName" placeholder="Ismingiz va Familiyangiz">
+<div id="start">
+  <input id="testCode" placeholder="Test kodi (admindan olingan)">
   <button onclick="startTest()">➡️ Testni boshlash</button>
 </div>
 
-<!-- 2-Bosqich: test kodi -->
-<div id="codeInput" style="display:none;">
-  <input id="testCode" placeholder="Test kodini kiriting">
-  <button onclick="sendCode()">✅ Tasdiqlash</button>
+<div id="testArea" style="display:none">
+  <div id="progress"></div>
+  <div id="questionContainer"></div>
+  <button id="nextBtn" onclick="nextQuestion()">➡️ Keyingi</button>
+  <button id="finishBtn" style="display:none;" onclick="finishTest()">✅ Testni tugatish</button>
 </div>
 
 <script>
 Telegram.WebApp.ready();
 
-let user = { role: "user", name: "", test_code: "" };
+let test = { role:"user", test_code:"", questions:[], answers:[] };
+let currentQ = 0;
 
-function startTest() {
-  const name = document.getElementById("userName").value.trim();
-  if(!name) return alert("Iltimos, ismingiz va familiyangizni kiriting");
-  user.name = name;
+function startTest(){
+  const code = document.getElementById("testCode").value.trim();
+  if(!code){ alert("Test kodini kiriting"); return; }
+  test.test_code = code;
 
-  document.getElementById("userForm").style.display = "none";
-  document.getElementById("codeInput").style.display = "block";
+  // Bu yerda admin botga JSON orqali testni olishini simulyatsiya qilamiz
+  // Misol uchun testni shunday tayyorlaymiz:
+  test.questions = [
+    {question:"1-savol matni", options:["A1","B1","C1","D1","E1"], written:"javob1", correct:["B1"]},
+    {question:"2-savol matni", options:["A2","B2","C2","D2","E2"], written:"", correct:["A2","C2"]}
+  ];
+
+  document.getElementById("start").style.display="none";
+  document.getElementById("testArea").style.display="block";
+  showQuestion();
 }
 
-function sendCode() {
-  const code = document.getElementById("testCode").value.trim();
-  if(!code) return alert("Iltimos, test kodini kiriting");
-  user.test_code = code;
+function showQuestion(){
+  const q = test.questions[currentQ];
+  const container = document.getElementById("questionContainer");
+  container.innerHTML = `<h3>📌 ${q.question}</h3>`;
 
-  Telegram.WebApp.sendData(JSON.stringify(user));
+  if(q.options.length){
+    q.options.forEach((opt,i)=>{
+      container.innerHTML += `<div><input type="checkbox" name="opt" value="${opt}"> ${opt}</div>`;
+    });
+  }
+
+  container.innerHTML += `<textarea id="written" placeholder="✍️ Yozma javob (ixtiyoriy)">${q.written || ""}</textarea>`;
+
+  document.getElementById("progress").innerText = `📝 Siz ${test.questions.length} ta savoldan ${currentQ+1}-savolga javob beryapsiz`;
+}
+
+function nextQuestion(){
+  const q = test.questions[currentQ];
+  let selected = [];
+  document.querySelectorAll("input[name='opt']:checked").forEach(chk=> selected.push(chk.value));
+  let written = document.getElementById("written").value;
+
+  test.answers.push({selected, written});
+  currentQ++;
+
+  if(currentQ < test.questions.length){
+    showQuestion();
+  } else {
+    document.getElementById("nextBtn").style.display="none";
+    document.getElementById("finishBtn").style.display="block";
+  }
+}
+
+function finishTest(){
+  Telegram.WebApp.sendData(JSON.stringify(test));
   Telegram.WebApp.close();
 }
 </script>
-
 </body>
 </html>
