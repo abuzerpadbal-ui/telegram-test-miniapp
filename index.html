@@ -2,156 +2,50 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Test Builder</title>
+  <title>Testni Boshlash</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 15px;
-      background: #f5f5f5;
-    }
-    h2 {
-      text-align: center;
-    }
-    input, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-    }
-    .question-box {
-      background: #fff;
-      padding: 10px;
-      margin-top: 15px;
-      border-radius: 6px;
-    }
-    .option {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 5px;
-    }
-    .option input[type="text"] {
-      flex: 1;
-    }
+    body { font-family: Arial, sans-serif; padding: 15px; background: #f5f5f5; }
+    h2 { text-align: center; }
+    input, button, textarea { width: 100%; padding: 10px; margin: 6px 0; }
   </style>
 </head>
-
 <body>
-<h2>👑 Admin Test Yaratish</h2>
 
-<div id="step1">
-  <input id="testCode" placeholder="Test kodini kiriting (masalan SAT123)">
-  <input id="questionCount" type="number" placeholder="Nechta savol?" min="1">
-  <button onclick="startTest()">➡️ Keyingi</button>
+<h2>🧪 Testni boshlash</h2>
+
+<!-- 1-Bosqich: ism va familiya -->
+<div id="userForm">
+  <input id="userName" placeholder="Ismingiz va Familiyangiz">
+  <button onclick="startTest()">➡️ Testni boshlash</button>
 </div>
 
-<div id="questions"></div>
-
-<button id="finishBtn" style="display:none;" onclick="finishTest()">✅ Testni saqlash</button>
+<!-- 2-Bosqich: test kodi -->
+<div id="codeInput" style="display:none;">
+  <input id="testCode" placeholder="Test kodini kiriting">
+  <button onclick="sendCode()">✅ Tasdiqlash</button>
+</div>
 
 <script>
 Telegram.WebApp.ready();
 
-let test = {
-  role: "admin",
-  test_code: "",
-  questions: []
-};
-
-let totalQuestions = 0;
-let currentQuestion = 0;
+let user = { role: "user", name: "", test_code: "" };
 
 function startTest() {
+  const name = document.getElementById("userName").value.trim();
+  if(!name) return alert("Iltimos, ismingiz va familiyangizni kiriting");
+  user.name = name;
+
+  document.getElementById("userForm").style.display = "none";
+  document.getElementById("codeInput").style.display = "block";
+}
+
+function sendCode() {
   const code = document.getElementById("testCode").value.trim();
-  const count = parseInt(document.getElementById("questionCount").value);
+  if(!code) return alert("Iltimos, test kodini kiriting");
+  user.test_code = code;
 
-  if (!code || !count) {
-    alert("Test kodi va savollar sonini kiriting");
-    return;
-  }
-
-  test.test_code = code;
-  totalQuestions = count;
-
-  document.getElementById("step1").style.display = "none";
-  createQuestion();
-}
-
-function createQuestion() {
-  currentQuestion++;
-
-  const box = document.createElement("div");
-  box.className = "question-box";
-
-  box.innerHTML = `
-    <h3>Savol ${currentQuestion}</h3>
-    <textarea placeholder="Savol matni"></textarea>
-
-    <div class="option">
-      <input placeholder="A variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="B variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="C variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="D variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="E variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-
-    <textarea placeholder="✍️ Yozma javob (ixtiyoriy)"></textarea>
-
-    <button onclick="saveQuestion(this)">💾 Saqlash</button>
-  `;
-
-  document.getElementById("questions").appendChild(box);
-}
-
-function saveQuestion(btn) {
-  const box = btn.parentElement;
-  const inputs = box.querySelectorAll("input[type='text']");
-  const checks = box.querySelectorAll("input[type='checkbox']");
-  const textareas = box.querySelectorAll("textarea");
-
-  let options = [];
-  let correct = [];
-
-  inputs.forEach((inp, i) => {
-    if (inp.value.trim()) {
-      options.push(inp.value.trim());
-      if (checks[i].checked) {
-        correct.push(inp.value.trim());
-      }
-    }
-  });
-
-  test.questions.push({
-    question: textareas[0].value,
-    options: options,
-    correct: correct,
-    written: textareas[1].value
-  });
-
-  btn.disabled = true;
-  btn.innerText = "✔ Saqlandi";
-
-  if (currentQuestion < totalQuestions) {
-    createQuestion();
-  } else {
-    document.getElementById("finishBtn").style.display = "block";
-  }
-}
-
-function finishTest() {
-  Telegram.WebApp.sendData(JSON.stringify(test));
+  Telegram.WebApp.sendData(JSON.stringify(user));
   Telegram.WebApp.close();
 }
 </script>
