@@ -5,37 +5,16 @@
   <title>Admin Test Builder</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 15px;
-      background: #f5f5f5;
-    }
-    h2 {
-      text-align: center;
-    }
-    input, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-    }
-    .question-box {
-      background: #fff;
-      padding: 10px;
-      margin-top: 15px;
-      border-radius: 6px;
-    }
-    .option {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 5px;
-    }
-    .option input[type="text"] {
-      flex: 1;
-    }
+    body { font-family: Arial, sans-serif; padding: 15px; background: #f5f5f5; }
+    h2 { text-align: center; }
+    input, textarea, button { width: 100%; padding: 10px; margin: 6px 0; }
+    .question-box { background: #fff; padding: 10px; margin-top: 15px; border-radius: 6px; }
+    .option { display: flex; gap: 5px; margin-bottom: 5px; }
+    .option input[type="text"] { flex: 1; }
   </style>
 </head>
-
 <body>
+
 <h2>👑 Admin Test Yaratish</h2>
 
 <div id="step1">
@@ -51,23 +30,14 @@
 <script>
 Telegram.WebApp.ready();
 
-let test = {
-  role: "admin",
-  test_code: "",
-  questions: []
-};
-
+let test = { role: "admin", test_code: "", questions: [] };
 let totalQuestions = 0;
 let currentQuestion = 0;
 
 function startTest() {
   const code = document.getElementById("testCode").value.trim();
   const count = parseInt(document.getElementById("questionCount").value);
-
-  if (!code || !count) {
-    alert("Test kodi va savollar sonini kiriting");
-    return;
-  }
+  if (!code || !count) return alert("Test kodi va savollar sonini kiriting");
 
   test.test_code = code;
   totalQuestions = count;
@@ -85,30 +55,12 @@ function createQuestion() {
   box.innerHTML = `
     <h3>Savol ${currentQuestion}</h3>
     <textarea placeholder="Savol matni"></textarea>
-
-    <div class="option">
-      <input placeholder="A variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="B variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="C variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="D variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-    <div class="option">
-      <input placeholder="E variant">
-      <input type="checkbox"> To‘g‘ri
-    </div>
-
+    <div class="option"><input placeholder="A variant"><input type="checkbox"> To‘g‘ri</div>
+    <div class="option"><input placeholder="B variant"><input type="checkbox"> To‘g‘ri</div>
+    <div class="option"><input placeholder="C variant"><input type="checkbox"> To‘g‘ri</div>
+    <div class="option"><input placeholder="D variant"><input type="checkbox"> To‘g‘ri</div>
+    <div class="option"><input placeholder="E variant"><input type="checkbox"> To‘g‘ri</div>
     <textarea placeholder="✍️ Yozma javob (ixtiyoriy)"></textarea>
-
     <button onclick="saveQuestion(this)">💾 Saqlash</button>
   `;
 
@@ -121,15 +73,12 @@ function saveQuestion(btn) {
   const checks = box.querySelectorAll("input[type='checkbox']");
   const textareas = box.querySelectorAll("textarea");
 
-  let options = [];
-  let correct = [];
+  let options = [], correct = [];
 
   inputs.forEach((inp, i) => {
     if (inp.value.trim()) {
       options.push(inp.value.trim());
-      if (checks[i].checked) {
-        correct.push(inp.value.trim());
-      }
+      if (checks[i].checked) correct.push(inp.value.trim());
     }
   });
 
@@ -143,11 +92,8 @@ function saveQuestion(btn) {
   btn.disabled = true;
   btn.innerText = "✔ Saqlandi";
 
-  if (currentQuestion < totalQuestions) {
-    createQuestion();
-  } else {
-    document.getElementById("finishBtn").style.display = "block";
-  }
+  if (currentQuestion < totalQuestions) createQuestion();
+  else document.getElementById("finishBtn").style.display = "block";
 }
 
 function finishTest() {
