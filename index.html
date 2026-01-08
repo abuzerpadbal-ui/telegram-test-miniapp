@@ -1,94 +1,83 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>📝 Mijoz Test Mini App</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Admin Panel</title>
 <style>
-  body { font-family: Arial; background: #fff8dc; padding: 15px; }
-  h2 { text-align:center; color: #333399; }
-  .question-box { background:#f0f0f0; padding:12px; margin:12px 0; border-radius:8px; }
-  input[type="radio"], input[type="checkbox"] { margin-right:5px; }
-  textarea { width:100%; padding:8px; margin:5px 0; border-radius:5px; }
-  button { width:100%; padding:10px; margin:8px 0; background:#1e90ff; color:#fff; border:none; font-weight:bold; border-radius:5px; cursor:pointer; }
-  button:hover { background:#1c86ee; }
-  #progress { font-weight:bold; margin-bottom:10px; }
+body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; }
+h1 { color: #2c3e50; }
+input, textarea, select, button { display: block; margin: 10px 0; padding: 8px; width: 100%; }
+button { background: #3498db; color: white; border: none; cursor: pointer; }
+button:hover { background: #2980b9; }
+.card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
 </style>
 </head>
 <body>
-<h2>📝 Testni boshlash</h2>
+<h1>📝 Test yaratish paneli</h1>
+<div class="card">
+<label>Test nomi:</label>
+<input type="text" id="testName">
 
-<div id="start">
-  <input id="testCode" placeholder="Test kodi (admindan olingan)">
-  <button onclick="startTest()">➡️ Testni boshlash</button>
+<label>Savol soni:</label>
+<input type="number" id="questionCount" min="1" max="1000">
+
+<button onclick="startTest()">Test yaratishni boshlash</button>
 </div>
 
-<div id="testArea" style="display:none">
-  <div id="progress"></div>
-  <div id="questionContainer"></div>
-  <button id="nextBtn" onclick="nextQuestion()">➡️ Keyingi</button>
-  <button id="finishBtn" style="display:none;" onclick="finishTest()">✅ Testni tugatish</button>
-</div>
+<div id="questions"></div>
 
 <script>
-Telegram.WebApp.ready();
+let questionsData = [];
 
-let test = { role:"user", test_code:"", questions:[], answers:[] };
-let currentQ = 0;
-
-function startTest(){
-  const code = document.getElementById("testCode").value.trim();
-  if(!code){ alert("Test kodini kiriting"); return; }
-  test.test_code = code;
-
-  // Bu yerda admin botga JSON orqali testni olishini simulyatsiya qilamiz
-  // Misol uchun testni shunday tayyorlaymiz:
-  test.questions = [
-    {question:"1-savol matni", options:["A1","B1","C1","D1","E1"], written:"javob1", correct:["B1"]},
-    {question:"2-savol matni", options:["A2","B2","C2","D2","E2"], written:"", correct:["A2","C2"]}
-  ];
-
-  document.getElementById("start").style.display="none";
-  document.getElementById("testArea").style.display="block";
-  showQuestion();
+function startTest() {
+    const count = parseInt(document.getElementById('questionCount').value);
+    const container = document.getElementById('questions');
+    container.innerHTML = '';
+    questionsData = [];
+    for(let i=1; i<=count; i++){
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <h3>Savol ${i}</h3>
+            <textarea placeholder="Savol matni" id="q${i}"></textarea>
+            <input placeholder="A variant" id="q${i}a">
+            <input placeholder="B variant" id="q${i}b">
+            <input placeholder="C variant" id="q${i}c">
+            <input placeholder="D variant" id="q${i}d">
+            <input placeholder="E variant" id="q${i}e">
+            <input placeholder="To'g'ri javob (misol: A yoki A va C)" id="q${i}correct">
+        `;
+        container.appendChild(card);
+    }
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = "💾 Testni saqlash";
+    saveBtn.onclick = saveTest;
+    container.appendChild(saveBtn);
 }
 
-function showQuestion(){
-  const q = test.questions[currentQ];
-  const container = document.getElementById("questionContainer");
-  container.innerHTML = `<h3>📌 ${q.question}</h3>`;
-
-  if(q.options.length){
-    q.options.forEach((opt,i)=>{
-      container.innerHTML += `<div><input type="checkbox" name="opt" value="${opt}"> ${opt}</div>`;
-    });
-  }
-
-  container.innerHTML += `<textarea id="written" placeholder="✍️ Yozma javob (ixtiyoriy)">${q.written || ""}</textarea>`;
-
-  document.getElementById("progress").innerText = `📝 Siz ${test.questions.length} ta savoldan ${currentQ+1}-savolga javob beryapsiz`;
-}
-
-function nextQuestion(){
-  const q = test.questions[currentQ];
-  let selected = [];
-  document.querySelectorAll("input[name='opt']:checked").forEach(chk=> selected.push(chk.value));
-  let written = document.getElementById("written").value;
-
-  test.answers.push({selected, written});
-  currentQ++;
-
-  if(currentQ < test.questions.length){
-    showQuestion();
-  } else {
-    document.getElementById("nextBtn").style.display="none";
-    document.getElementById("finishBtn").style.display="block";
-  }
-}
-
-function finishTest(){
-  Telegram.WebApp.sendData(JSON.stringify(test));
-  Telegram.WebApp.close();
+function saveTest() {
+    const testName = document.getElementById('testName').value;
+    const count = parseInt(document.getElementById('questionCount').value);
+    const test = [];
+    for(let i=1;i<=count;i++){
+        test.push({
+            question: document.getElementById(`q${i}`).value,
+            options: [
+                document.getElementById(`q${i}a`).value,
+                document.getElementById(`q${i}b`).value,
+                document.getElementById(`q${i}c`).value,
+                document.getElementById(`q${i}d`).value,
+                document.getElementById(`q${i}e`).value
+            ],
+            correct: document.getElementById(`q${i}correct`).value.split(' va ')
+        });
+    }
+    fetch('https://yourserver.com/save_test', { // URLni o'zgartiring
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name:testName, questions:test})
+    }).then(res=>alert('✅ Test saqlandi!'));
 }
 </script>
 </body>
