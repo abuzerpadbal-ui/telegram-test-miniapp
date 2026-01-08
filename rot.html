@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Test Panel</title>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -33,22 +35,19 @@ input, button {
 }
 </style>
 </head>
-
 <body>
 
 <div class="container">
-
-<h2>Test boshlaymizmi?</h2>
+<h2>Admin test yaratish</h2>
 
 <div id="startPanel">
-  <p>Startni bosing va testni tuzishni boshlang</p>
-  <button onclick="startTest()">Start</button>
+  <button onclick="startTest()">Test boshlash</button>
 </div>
 
 <div id="configPanel" class="hidden">
-  <input type="number" id="questionCount" placeholder="Nechta savol?" />
-  <input type="number" id="testCode" placeholder="Test kodi (faqat son)" />
-  <button onclick="beginQuestions()">Keyingi</button>
+  <input id="testCode" placeholder="Test kodi" />
+  <input id="questionCount" type="number" placeholder="Nechta savol?" />
+  <button onclick="beginQuestions()">Davom etish</button>
 </div>
 
 <div id="questionPanel" class="hidden">
@@ -63,116 +62,103 @@ input, button {
   </div>
 
   <input
-    type="text"
     id="written"
-    placeholder="Yozma javob (ko‘p javob bo‘lsa 'va' bilan ajratiladi)"
+    placeholder="Yozma javoblar (masalan: 2 va 3 va x+1)"
     oninput="writtenInput()"
   />
 
   <button onclick="nextQuestion()">Keyingi savol</button>
 </div>
-
 </div>
 
 <script>
-/* 🔹 TELEGRAM MINI APP ULANISH */
 const tg = window.Telegram.WebApp;
+tg.expand();
 
-/* 🔹 O‘ZGARUVCHILAR */
 let total = 0;
 let current = 0;
-let test = [];
 let selectedVariant = null;
+let testCode = "";
+let test = [];
 
-/* 🔹 START */
 function startTest() {
-  document.getElementById("startPanel").classList.add("hidden");
-  document.getElementById("configPanel").classList.remove("hidden");
+  startPanel.classList.add("hidden");
+  configPanel.classList.remove("hidden");
 }
 
-/* 🔹 SAVOLLARNI BOSHLASH */
 function beginQuestions() {
-  total = Number(document.getElementById("questionCount").value);
-  const code = document.getElementById("testCode").value;
+  testCode = document.getElementById("testCode").value.trim();
+  total = +document.getElementById("questionCount").value;
 
-  if (!total) return alert("Savol sonini kiriting!");
-  if (!code) return alert("Test kodini kiriting!");
+  if (!testCode || !total) {
+    alert("Test kodi va savol sonini kiriting!");
+    return;
+  }
 
-  document.getElementById("configPanel").classList.add("hidden");
-  document.getElementById("questionPanel").classList.remove("hidden");
+  configPanel.classList.add("hidden");
+  questionPanel.classList.remove("hidden");
   showQuestion();
 }
 
-/* 🔹 SAVOL KO‘RSATISH */
 function showQuestion() {
-  document.getElementById("qTitle").innerText =
-    `Savol ${current + 1} / ${total}`;
-  document.getElementById("written").value = "";
-  enableVariants(true);
+  qTitle.innerText = `Savol ${current + 1} / ${total}`;
+  written.value = "";
   selectedVariant = null;
+  enableVariants(true);
 }
 
-/* 🔹 VARIANT TANLASH */
 function selectVariant(v) {
   selectedVariant = v;
-  document.getElementById("written").disabled = true;
-  highlightVariant(v);
+  written.disabled = true;
+
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    if (b.innerText === v) b.classList.add("active");
+  });
 }
 
-/* 🔹 YOZMA JAVOB */
 function writtenInput() {
-  const input = document.getElementById("written");
-  if (input.value.length > 0) {
+  if (written.value.trim()) {
     enableVariants(false);
     selectedVariant = null;
-
-    const parts = input.value
-      .split(" va ")
-      .map(p => p.trim())
-      .filter(p => p);
-    input.value = parts.join(" va ");
   } else {
     enableVariants(true);
   }
 }
 
-/* 🔹 VARIANTLARNI YOQISH/O‘CHIRISH */
 function enableVariants(enable) {
-  document.querySelectorAll(".variants button").forEach(btn => {
-    btn.classList.remove("active");
-    btn.disabled = !enable;
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.disabled = !enable;
+    b.classList.remove("active");
   });
-  document.getElementById("written").disabled = !enable ? false : false;
+  written.disabled = !enable;
 }
 
-/* 🔹 AKTIV VARIANT */
-function highlightVariant(v) {
-  document.querySelectorAll(".variants button").forEach(btn => {
-    btn.classList.remove("active");
-    if (btn.innerText === v) btn.classList.add("active");
-  });
-}
-
-/* 🔹 KEYINGI SAVOL */
 function nextQuestion() {
+  // 🔥 MUHIM JOY — "va" bilan ajratish
+  const writtenAnswers = written.value
+    .split(" va ")
+    .map(x => x.trim())
+    .filter(x => x !== "");
+
   test.push({
     variant: selectedVariant,
-    written: document.getElementById("written").value
+    written_answers: writtenAnswers
   });
 
   current++;
 
-  if (current >= total) {
-    const payload = {
-      testCode: document.getElementById("testCode").value,
-      test: test
-    };
+  if (current >= total) finishTest();
+  else showQuestion();
+}
 
-    tg.sendData(JSON.stringify(payload));
-    tg.close();
-  } else {
-    showQuestion();
-  }
+function finishTest() {
+  tg.sendData(JSON.stringify({
+    role: "admin",
+    test_code: testCode,
+    questions: test
+  }));
+  tg.close();
 }
 </script>
 
