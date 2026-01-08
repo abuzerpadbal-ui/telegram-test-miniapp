@@ -1,106 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📝 Test Admin Panel</title>
-<style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7fb; padding: 20px; }
-h1 { color: #2c3e50; text-align: center; }
-input, textarea, select, button { display: block; margin: 10px 0; padding: 10px; width: 100%; font-size: 16px; }
-button { background: #3498db; color: white; border: none; cursor: pointer; border-radius: 5px; transition: 0.3s; }
-button:hover { background: #2980b9; }
-.card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-label { font-weight: bold; margin-top: 10px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Test Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(120deg, #f0f4ff, #e0eaff);
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: 500;
+        }
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            margin: 5px 0 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .question-block {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .variant-inputs {
+            display: flex;
+            gap: 10px;
+        }
+        .variant-inputs input {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>📋 Admin Test Panel</h1>
 
-<h1>📝 Test Yaratish Paneli</h1>
+        <div id="startPanel">
+            <label>Test uchun necha savol qo'shmoqchisiz?</label>
+            <input type="number" id="totalQuestions" placeholder="Masalan: 5">
+            <button id="startTestBtn">🚀 Testni boshlash</button>
+        </div>
 
-<div class="card">
-<label>Test nomi:</label>
-<input type="text" id="testName" placeholder="Test nomini kiriting">
+        <div id="questionPanel" style="display:none;">
+            <div class="question-counter">Savol 1</div>
+            <div class="question-block">
+                <label>A/B/C/D/E javoblarni kiritish:</label>
+                <div class="variant-inputs">
+                    <input type="text" id="variantA" placeholder="A">
+                    <input type="text" id="variantB" placeholder="B">
+                    <input type="text" id="variantC" placeholder="C">
+                    <input type="text" id="variantD" placeholder="D">
+                    <input type="text" id="variantE" placeholder="E">
+                </div>
 
-<label>Savol soni:</label>
-<input type="number" id="questionCount" min="1" max="1000" placeholder="Nechta savol qo'shmoqchisiz?">
+                <label>Yozma javob (agar bo'lsa, bir nechta bo'lsa 'va' bilan ajrating):</label>
+                <input type="text" id="writtenAnswer" placeholder="Masalan: 2 va 5">
 
-<button onclick="startTest()">🚀 Test yaratishni boshlash</button>
-</div>
+                <button id="nextQuestionBtn">➡ Keyingi savol</button>
+                <button id="saveTestBtn" style="background:#28a745;">💾 Testni saqlash</button>
+            </div>
+        </div>
+    </div>
 
-<div id="questions"></div>
+    <script>
+        let totalQuestions = 0;
+        let currentQuestion = 1;
+        let testData = [];
 
-<script>
-let questionsData = [];
+        const startPanel = document.getElementById('startPanel');
+        const questionPanel = document.getElementById('questionPanel');
+        const questionCounter = document.querySelector('.question-counter');
 
-function startTest() {
-    const count = parseInt(document.getElementById('questionCount').value);
-    if(!count || count < 1) return alert("❌ Iltimos, savol sonini to‘g‘ri kiriting!");
-    const container = document.getElementById('questions');
-    container.innerHTML = '';
-    questionsData = [];
-
-    for(let i=1; i<=count; i++){
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <h3>🔹 Savol ${i}</h3>
-            <textarea placeholder="Savol matni" id="q${i}" rows="2"></textarea>
-            <label>Variantlar (A-E):</label>
-            <input placeholder="A variant" id="q${i}a">
-            <input placeholder="B variant" id="q${i}b">
-            <input placeholder="C variant" id="q${i}c">
-            <input placeholder="D variant" id="q${i}d">
-            <input placeholder="E variant" id="q${i}e">
-            <label>Yozma javob (agar bo'lsa):</label>
-            <input placeholder="Yozma javob" id="q${i}text">
-            <label>To'g'ri javob (misol: A yoki A va C yoki 2 va 5):</label>
-            <input placeholder="To'g'ri javobni kiriting" id="q${i}correct">
-        `;
-        container.appendChild(card);
-    }
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = "💾 Testni saqlash";
-    saveBtn.onclick = saveTest;
-    container.appendChild(saveBtn);
-}
-
-function saveTest() {
-    const testName = document.getElementById('testName').value.trim();
-    if(!testName) return alert("❌ Test nomini kiriting!");
-
-    const count = parseInt(document.getElementById('questionCount').value);
-    const test = [];
-    for(let i=1;i<=count;i++){
-        test.push({
-            question: document.getElementById(`q${i}`).value,
-            options: [
-                document.getElementById(`q${i}a`).value,
-                document.getElementById(`q${i}b`).value,
-                document.getElementById(`q${i}c`).value,
-                document.getElementById(`q${i}d`).value,
-                document.getElementById(`q${i}e`).value
-            ],
-            textAnswer: document.getElementById(`q${i}text`).value,
-            correct: document.getElementById(`q${i}correct`).value.split(' va ').map(c=>c.trim())
+        document.getElementById('startTestBtn').addEventListener('click', () => {
+            totalQuestions = parseInt(document.getElementById('totalQuestions').value);
+            if (totalQuestions > 0) {
+                startPanel.style.display = 'none';
+                questionPanel.style.display = 'block';
+                questionCounter.innerText = 'Savol 1';
+            } else {
+                alert('Iltimos, test uchun savol sonini kiriting!');
+            }
         });
-    }
 
-    // testni bot serverga yuborish
-    fetch('https://yourserver.com/save_test', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({name:testName, questions:test})
-    })
-    .then(res=>{
-        alert('✅ Test saqlandi!');
-        // mini app linki uchun botga signal
-        fetch('https://yourserver.com/admin_notify', {method:'POST', body: testName})
-    })
-    .catch(err=>alert("❌ Xatolik yuz berdi!"));
-}
-</script>
+        document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+            saveCurrentQuestion();
+            if (currentQuestion < totalQuestions) {
+                currentQuestion++;
+                questionCounter.innerText = 'Savol ' + currentQuestion;
+                clearInputs();
+            } else {
+                alert('📌 Barcha savollar kiritildi. "Testni saqlash" tugmasini bosing.');
+            }
+        });
 
+        document.getElementById('saveTestBtn').addEventListener('click', () => {
+            saveCurrentQuestion();
+            localStorage.setItem('testData', JSON.stringify(testData));
+            alert('✅ Test saqlandi! Bot orqali mijozga yuborishga tayyor.');
+        });
+
+        function saveCurrentQuestion() {
+            const question = {
+                variants: {
+                    A: document.getElementById('variantA').value,
+                    B: document.getElementById('variantB').value,
+                    C: document.getElementById('variantC').value,
+                    D: document.getElementById('variantD').value,
+                    E: document.getElementById('variantE').value,
+                },
+                writtenAnswer: document.getElementById('writtenAnswer').value
+            };
+            testData[currentQuestion - 1] = question;
+        }
+
+        function clearInputs() {
+            document.getElementById('variantA').value = '';
+            document.getElementById('variantB').value = '';
+            document.getElementById('variantC').value = '';
+            document.getElementById('variantD').value = '';
+            document.getElementById('variantE').value = '';
+            document.getElementById('writtenAnswer').value = '';
+        }
+    </script>
 </body>
 </html>
