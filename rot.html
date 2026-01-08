@@ -1,96 +1,83 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>👑 Admin Test Builder</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Admin Panel</title>
 <style>
-  body { font-family: Arial; background: #f0f8ff; padding: 15px; }
-  h2 { text-align: center; color: #2a2a72; }
-  input, textarea, button { width: 100%; padding: 10px; margin: 6px 0; border-radius: 5px; }
-  .question-box { background: #fff; padding: 15px; margin: 12px 0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
-  .option { display: flex; gap: 5px; margin-bottom: 5px; }
-  .option input[type="text"] { flex: 1; }
-  button { background: #4caf50; color: #fff; border: none; cursor: pointer; font-weight: bold; }
-  button:hover { background: #45a049; }
+body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; }
+h1 { color: #2c3e50; }
+input, textarea, select, button { display: block; margin: 10px 0; padding: 8px; width: 100%; }
+button { background: #3498db; color: white; border: none; cursor: pointer; }
+button:hover { background: #2980b9; }
+.card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
 </style>
 </head>
 <body>
-<h2>👑 Admin Test Yaratish</h2>
+<h1>📝 Test yaratish paneli</h1>
+<div class="card">
+<label>Test nomi:</label>
+<input type="text" id="testName">
 
-<div id="step1">
-  <input id="testCode" placeholder="Test kodi (masalan SAT123)">
-  <input id="questionCount" type="number" placeholder="Nechta savol?" min="1">
-  <button onclick="startTest()">➡️ Keyingi</button>
+<label>Savol soni:</label>
+<input type="number" id="questionCount" min="1" max="1000">
+
+<button onclick="startTest()">Test yaratishni boshlash</button>
 </div>
 
 <div id="questions"></div>
 
-<button id="finishBtn" style="display:none;" onclick="finishTest()">✅ Testni saqlash</button>
-
 <script>
-Telegram.WebApp.ready();
-
-let test = { role: "admin", test_code: "", questions: [] };
-let totalQuestions = 0;
-let currentQuestion = 0;
+let questionsData = [];
 
 function startTest() {
-  const code = document.getElementById("testCode").value.trim();
-  const count = parseInt(document.getElementById("questionCount").value);
-  if(!code || !count){ alert("Kod va savollar sonini kiriting"); return; }
-
-  test.test_code = code;
-  totalQuestions = count;
-  document.getElementById("step1").style.display = "none";
-  createQuestion();
+    const count = parseInt(document.getElementById('questionCount').value);
+    const container = document.getElementById('questions');
+    container.innerHTML = '';
+    questionsData = [];
+    for(let i=1; i<=count; i++){
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <h3>Savol ${i}</h3>
+            <textarea placeholder="Savol matni" id="q${i}"></textarea>
+            <input placeholder="A variant" id="q${i}a">
+            <input placeholder="B variant" id="q${i}b">
+            <input placeholder="C variant" id="q${i}c">
+            <input placeholder="D variant" id="q${i}d">
+            <input placeholder="E variant" id="q${i}e">
+            <input placeholder="To'g'ri javob (misol: A yoki A va C)" id="q${i}correct">
+        `;
+        container.appendChild(card);
+    }
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = "💾 Testni saqlash";
+    saveBtn.onclick = saveTest;
+    container.appendChild(saveBtn);
 }
 
-function createQuestion() {
-  currentQuestion++;
-  const box = document.createElement("div");
-  box.className = "question-box";
-
-  box.innerHTML = `
-    <h3>📌 Savol ${currentQuestion}</h3>
-    <textarea placeholder="Savol matni"></textarea>
-    <div class="option"><input placeholder="A variant"><input type="checkbox"> To‘g‘ri</div>
-    <div class="option"><input placeholder="B variant"><input type="checkbox"> To‘g‘ri</div>
-    <div class="option"><input placeholder="C variant"><input type="checkbox"> To‘g‘ri</div>
-    <div class="option"><input placeholder="D variant"><input type="checkbox"> To‘g‘ri</div>
-    <div class="option"><input placeholder="E variant"><input type="checkbox"> To‘g‘ri</div>
-    <textarea placeholder="✍️ Yozma javob (ixtiyoriy)"></textarea>
-    <button onclick="saveQuestion(this)">💾 Saqlash</button>
-  `;
-
-  document.getElementById("questions").appendChild(box);
-}
-
-function saveQuestion(btn) {
-  const box = btn.parentElement;
-  const inputs = box.querySelectorAll("input[type='text']");
-  const checks = box.querySelectorAll("input[type='checkbox']");
-  const textareas = box.querySelectorAll("textarea");
-
-  let options=[], correct=[];
-  inputs.forEach((inp,i)=>{ if(inp.value.trim()){ options.push(inp.value.trim()); if(checks[i].checked) correct.push(inp.value.trim()); } });
-
-  test.questions.push({
-    question: textareas[0].value,
-    options: options,
-    correct: correct,
-    written: textareas[1].value
-  });
-
-  btn.disabled = true; btn.innerText="✔ Saqlandi";
-
-  if(currentQuestion < totalQuestions) createQuestion();
-  else document.getElementById("finishBtn").style.display="block";
-}
-
-function finishTest() {
-  Telegram.WebApp.sendData(JSON.stringify(test));
-  Telegram.WebApp.close();
+function saveTest() {
+    const testName = document.getElementById('testName').value;
+    const count = parseInt(document.getElementById('questionCount').value);
+    const test = [];
+    for(let i=1;i<=count;i++){
+        test.push({
+            question: document.getElementById(`q${i}`).value,
+            options: [
+                document.getElementById(`q${i}a`).value,
+                document.getElementById(`q${i}b`).value,
+                document.getElementById(`q${i}c`).value,
+                document.getElementById(`q${i}d`).value,
+                document.getElementById(`q${i}e`).value
+            ],
+            correct: document.getElementById(`q${i}correct`).value.split(' va ')
+        });
+    }
+    fetch('https://yourserver.com/save_test', { // URLni o'zgartiring
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name:testName, questions:test})
+    }).then(res=>alert('✅ Test saqlandi!'));
 }
 </script>
 </body>
