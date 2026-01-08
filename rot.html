@@ -40,10 +40,9 @@ input, button {
 
 <div class="container">
 
-<h2 id="hello">👋 Salom Islom aka</h2>
+<h2 id="hello">Test boshlaymizmi?</h2>
 
 <div id="startPanel">
-  <p>Test tuzasizmi?</p>
   <button onclick="startTest()">Start</button>
 </div>
 
@@ -64,7 +63,7 @@ input, button {
     <button onclick="selectVariant('E')">E</button>
   </div>
 
-  <input type="text" id="written" placeholder="Yozma javob (2 va 3)" oninput="writtenInput()" />
+  <input type="text" id="written" placeholder="Yozma javob" oninput="writtenInput()" />
 
   <button onclick="nextQuestion()">Keyingi savol</button>
 </div>
@@ -137,7 +136,9 @@ function nextQuestion() {
   current++;
   if (current >= total) {
     alert("Test tugadi ✅");
+    // Mini app'dan chiqish
     window.close();
+    console.log("Test ma'lumotlari:", { testCode: document.getElementById("testCode").value, questions: test });
   } else {
     showQuestion();
   }
