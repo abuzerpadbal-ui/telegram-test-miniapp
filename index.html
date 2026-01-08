@@ -1,193 +1,194 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mijoz Test Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(120deg, #fff0f5, #e0f7fa);
-            padding: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #00bcd4;
-            margin-bottom: 25px;
-        }
-        label {
-            font-weight: 500;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 8px 10px;
-            margin: 5px 0 15px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #00bcd4;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #0097a7;
-        }
-        .question-block {
-            margin-top: 20px;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
-        }
-        .variant-btns {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        .variant-btns button {
-            flex: 1;
-        }
-        .written-input {
-            margin-top: 15px;
-        }
-        .progress {
-            margin-top: 10px;
-            font-weight: 500;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📝 Mijoz Test Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(120deg, #fff0f0, #ffe0e0);
+    padding: 20px;
+    color: #333;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+h1 {
+    text-align: center;
+    color: #e91e63;
+    margin-bottom: 25px;
+}
+label { font-weight: 500; }
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+button {
+    background-color: #e91e63;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+button:hover { background-color: #c2185b; }
+.question-block { margin-top: 25px; border-top: 1px solid #ddd; padding-top: 20px; }
+.variant-inputs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+.variant-inputs label { font-weight: normal; }
+.result { font-size: 18px; margin-top: 20px; text-align: center; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>📝 Mijoz Test Panel</h1>
+<div class="container">
+    <h1>📝 Mijoz Test Panel</h1>
 
-        <div id="startPanel">
-            <label>Ismingiz:</label>
-            <input type="text" id="firstName" placeholder="Ism">
-            <label>Familiyangiz:</label>
-            <input type="text" id="lastName" placeholder="Familiya">
-            <button id="startBtn">🚀 Testni boshlash</button>
-        </div>
+    <!-- Start Panel -->
+    <div id="startPanel">
+        <label>Ismingizni kiriting:</label>
+        <input type="text" id="firstName" placeholder="Ism">
+        <label>Familiyangizni kiriting:</label>
+        <input type="text" id="lastName" placeholder="Familiya">
+        <button id="startBtn">🚀 Testni boshlash</button>
+    </div>
 
-        <div id="testPanel" style="display:none;">
-            <div class="progress" id="progressText"></div>
-            <div class="question-block">
-                <div class="question-text" id="questionText">Savol matni</div>
-                <div class="variant-btns">
-                    <button id="btnA">A</button>
-                    <button id="btnB">B</button>
-                    <button id="btnC">C</button>
-                    <button id="btnD">D</button>
-                    <button id="btnE">E</button>
-                </div>
-                <div class="written-input" style="margin-top:10px;">
-                    <input type="text" id="writtenAnswer" placeholder="Agar yozma javob bo'lsa shu yerga yozing">
-                </div>
-                <button id="nextBtn" style="background:#28a745;">➡ Keyingi savol</button>
+    <!-- Code Verification Panel -->
+    <div id="codePanel" style="display:none;">
+        <label>Admin tomonidan berilgan kodni kiriting:</label>
+        <input type="text" id="accessCode" placeholder="Kod">
+        <button id="verifyCodeBtn">✅ Tasdiqlash</button>
+    </div>
+
+    <!-- Question Panel -->
+    <div id="questionPanel" style="display:none;">
+        <div class="question-counter">Savol 1</div>
+        <div class="question-block">
+            <div class="variant-inputs">
+                <label><input type="radio" name="answer" value="A"> A</label>
+                <label><input type="radio" name="answer" value="B"> B</label>
+                <label><input type="radio" name="answer" value="C"> C</label>
+                <label><input type="radio" name="answer" value="D"> D</label>
+                <label><input type="radio" name="answer" value="E"> E</label>
             </div>
-        </div>
+            <label>✍ Yozma javob (agar bo‘lsa):</label>
+            <input type="text" id="writtenAnswer">
 
-        <div id="resultPanel" style="display:none; text-align:center;">
-            <h2>🎉 Test tugadi!</h2>
-            <div id="scoreText"></div>
-            <button id="restartBtn" style="background:#ff9800;">🔄 Yana testga kirish</button>
+            <button id="nextQuestionBtn">➡ Keyingi savol</button>
         </div>
     </div>
 
-    <script>
-        // Demo uchun test data (Admin tarafdan saqlangan ma'lumotni oladi realda)
-        let testData = JSON.parse(localStorage.getItem('testData')) || [
-            {
-                variants: {A:'1',B:'2',C:'3',D:'4',E:'5'},
-                writtenAnswer: '2 va 5'
-            },
-            {
-                variants: {A:'a',B:'b',C:'c',D:'d',E:'e'},
-                writtenAnswer: 'c'
-            }
-        ];
+    <div id="resultPanel" style="display:none;">
+        <div class="result" id="resultText"></div>
+        <button id="restartBtn">🔄 Testga qayta kirish</button>
+    </div>
+</div>
 
-        let currentQuestion = 0;
-        let score = 0;
+<script>
+let testData = [];
+let currentQuestion = 0;
+let userAnswers = [];
+let adminCode = '1234'; // Admin bu kodni localStorage dan olishi mumkin
 
-        const startPanel = document.getElementById('startPanel');
-        const testPanel = document.getElementById('testPanel');
-        const resultPanel = document.getElementById('resultPanel');
-        const progressText = document.getElementById('progressText');
-        const questionText = document.getElementById('questionText');
-        const writtenInput = document.getElementById('writtenAnswer');
-        const scoreText = document.getElementById('scoreText');
+// Start
+document.getElementById('startBtn').addEventListener('click', () => {
+    let fname = document.getElementById('firstName').value.trim();
+    let lname = document.getElementById('lastName').value.trim();
+    if(fname && lname){
+        document.getElementById('startPanel').style.display = 'none';
+        document.getElementById('codePanel').style.display = 'block';
+    } else {
+        alert('Iltimos, ism va familiyani kiriting!');
+    }
+});
 
-        document.getElementById('startBtn').addEventListener('click', () => {
-            const fname = document.getElementById('firstName').value.trim();
-            const lname = document.getElementById('lastName').value.trim();
-            if(fname && lname){
-                startPanel.style.display = 'none';
-                testPanel.style.display = 'block';
-                loadQuestion();
-            } else {
-                alert('Iltimos, ism va familiyangizni kiriting!');
-            }
+// Verify code
+document.getElementById('verifyCodeBtn').addEventListener('click', () => {
+    let code = document.getElementById('accessCode').value.trim();
+    let savedTest = JSON.parse(localStorage.getItem('adminTestData'));
+    if(!savedTest || savedTest.length===0){
+        alert('Admin hali test yaratmagan!');
+        return;
+    }
+    if(code === adminCode){
+        testData = savedTest;
+        document.getElementById('codePanel').style.display = 'none';
+        document.getElementById('questionPanel').style.display = 'block';
+        loadQuestion();
+    } else {
+        alert('❌ Kod xato! To‘g‘ri kodni kiriting.');
+    }
+});
+
+// Load question
+function loadQuestion(){
+    if(currentQuestion >= testData.length){
+        showResult();
+        return;
+    }
+    const q = testData[currentQuestion];
+    document.querySelector('.question-counter').innerText = `Savol ${currentQuestion+1}/${testData.length}`;
+    let radios = document.getElementsByName('answer');
+    radios.forEach(r => r.checked = false);
+    document.getElementById('writtenAnswer').value = '';
+    if(q.variants.A || q.variants.B || q.variants.C || q.variants.D || q.variants.E){
+        // Show variants
+        radios.forEach((r,i)=>{
+            r.parentElement.style.display = ['A','B','C','D','E'][i] in q.variants ? 'block':'none';
+            r.nextSibling.textContent = ` ${q.variants[['A','B','C','D','E'][i]]}`;
         });
+    } else {
+        radios.forEach(r => r.parentElement.style.display = 'none');
+    }
+}
 
-        function loadQuestion(){
-            let q = testData[currentQuestion];
-            progressText.innerText = `Savol ${currentQuestion+1} / ${testData.length}`;
-            questionText.innerText = `Savol ${currentQuestion+1}`; // Admin matn yozmaydi
-            document.getElementById('btnA').innerText = q.variants.A;
-            document.getElementById('btnB').innerText = q.variants.B;
-            document.getElementById('btnC').innerText = q.variants.C;
-            document.getElementById('btnD').innerText = q.variants.D;
-            document.getElementById('btnE').innerText = q.variants.E;
-            writtenInput.value = '';
+// Next question
+document.getElementById('nextQuestionBtn').addEventListener('click', ()=>{
+    const q = testData[currentQuestion];
+    let radios = document.getElementsByName('answer');
+    let selected = Array.from(radios).find(r=>r.checked)?.value || '';
+    let written = document.getElementById('writtenAnswer').value.trim();
+    userAnswers.push({selected, written});
+    currentQuestion++;
+    loadQuestion();
+});
+
+// Show result
+function showResult(){
+    document.getElementById('questionPanel').style.display = 'none';
+    document.getElementById('resultPanel').style.display = 'block';
+    let total = testData.length;
+    let correct = 0;
+    for(let i=0;i<total;i++){
+        const q = testData[i];
+        let correctAns = (q.writtenAnswer || '').split(' va ').map(s=>s.trim());
+        if(correctAns.includes(userAnswers[i].selected) || correctAns.includes(userAnswers[i].written)){
+            correct++;
         }
+    }
+    // Ball hisoblash: 800 ballni test soniga bo‘lish
+    let ball = Math.round((800/total)*correct);
+    let text = `✅ Siz ${ball} ball oldingiz!`;
+    if(ball>=700) text += ' 🎉 Juda zo‘r! Tabrigimiz!';
+    else text += ' 😔 Afsus, keyingi safar ko‘proq harakat qiling!';
+    text += ' 🔄 Agar testga qayta kirishni xohlasangiz, Start tugmasini bosing.';
+    document.getElementById('resultText').innerText = text;
+}
 
-        function checkAnswer(answer){
-            let correct = testData[currentQuestion].writtenAnswer.split(' va ').map(a => a.trim());
-            if(correct.includes(answer.trim())){
-                score += 1; // Har bir to'g'ri javob 1 ball
-            }
-        }
-
-        document.getElementById('btnA').addEventListener('click',()=>{ checkAnswer(document.getElementById('btnA').innerText); });
-        document.getElementById('btnB').addEventListener('click',()=>{ checkAnswer(document.getElementById('btnB').innerText); });
-        document.getElementById('btnC').addEventListener('click',()=>{ checkAnswer(document.getElementById('btnC').innerText); });
-        document.getElementById('btnD').addEventListener('click',()=>{ checkAnswer(document.getElementById('btnD').innerText); });
-        document.getElementById('btnE').addEventListener('click',()=>{ checkAnswer(document.getElementById('btnE').innerText); });
-
-        document.getElementById('nextBtn').addEventListener('click',()=>{
-            let written = writtenInput.value.trim();
-            if(written) checkAnswer(written);
-            currentQuestion++;
-            if(currentQuestion < testData.length){
-                loadQuestion();
-            } else {
-                testPanel.style.display = 'none';
-                resultPanel.style.display = 'block';
-                scoreText.innerText = `Siz ${score} ball oldingiz.`;
-            }
-        });
-
-        document.getElementById('restartBtn').addEventListener('click',()=>{
-            currentQuestion = 0;
-            score = 0;
-            resultPanel.style.display = 'none';
-            startPanel.style.display = 'block';
-        });
-    </script>
+// Restart
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+    location.reload();
+});
+</script>
 </body>
 </html>
