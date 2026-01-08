@@ -3,181 +3,149 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📝 Test</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
+<title>Foydalanuvchi Test Panel</title>
 <style>
-body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(120deg,#eef3ff,#ffffff);
-  margin: 0;
-  padding: 20px;
-}
-.container {
-  max-width: 700px;
-  margin: auto;
-  background: #fff;
-  border-radius: 14px;
-  padding: 25px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.1);
-}
-h2 { margin-top: 0; color:#2563eb; }
-.progress {
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-.variant {
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:12px;
-  margin-bottom:10px;
-  cursor:pointer;
-}
-.variant.active {
-  background:#2563eb;
-  color:#fff;
-  border-color:#2563eb;
-}
-textarea {
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  resize:none;
-}
-button {
-  width:100%;
-  padding:14px;
-  margin-top:15px;
-  border:none;
-  border-radius:10px;
-  background:#2563eb;
-  color:#fff;
-  font-size:16px;
-  cursor:pointer;
-}
-button:hover { background:#1e40af; }
-.hidden { display:none; }
+body { font-family: Arial, sans-serif; background: #f4f6ff; }
+.container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+.hidden { display: none; }
+input, button { padding: 10px; margin: 5px 0; width: 100%; }
+.variants button { width: 48%; margin: 3px 1%; }
+.active { background: #4caf50; color: white; }
+.disabled { opacity: 0.5; pointer-events: none; }
+.result { background: #e3f2fd; padding: 10px; margin-top: 10px; border-radius: 5px; }
+.correct { color: green; font-weight: bold; }
+.wrong { color: red; font-weight: bold; }
 </style>
 </head>
-
 <body>
+
 <div class="container">
 
-  <!-- KOD PANEL -->
-  <div id="codePanel">
-    <h2>🔐 Test kodi</h2>
-    <input id="testCode" type="number" placeholder="Test kodini kiriting" style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc">
-    <button onclick="checkCode()">Boshlash</button>
+<h2>Testni boshlaymiz</h2>
+
+<div id="questionPanel">
+  <h3 id="qTitle"></h3>
+
+  <div class="variants">
+    <button onclick="selectVariant('A')">A</button>
+    <button onclick="selectVariant('B')">B</button>
+    <button onclick="selectVariant('C')">C</button>
+    <button onclick="selectVariant('D')">D</button>
+    <button onclick="selectVariant('E')">E</button>
   </div>
 
-  <!-- TEST PANEL -->
-  <div id="testPanel" class="hidden">
-    <div class="progress" id="progress"></div>
-    <h2 id="questionText"></h2>
+  <input type="text" id="written" placeholder="Yozma javob (agar kerak bo‘lsa)" oninput="writtenInput()" />
 
-    <div id="variants"></div>
+  <button onclick="nextQuestion()">Keyingi savol</button>
+</div>
 
-    <textarea id="written"
-      placeholder="Yozma javob..."
-      rows="3"
-      oninput="writtenTyped()"></textarea>
-
-    <button onclick="nextQuestion()">Keyingi</button>
-  </div>
+<div id="resultPanel" class="hidden">
+  <h3>Test natijalari</h3>
+  <div id="results"></div>
+</div>
 
 </div>
 
 <script>
-let tests = JSON.parse(localStorage.getItem("adminTests")) || {};
-let test = [];
-let index = 0;
-let score = 0;
-let selected = null;
+// Bu yerga admin tomonidan yuborilgan test ma'lumotlari o'rnatiladi
+// Misol uchun:
+let adminTest = [
+  { variant: "B", written: "" },
+  { variant: "A", written: "2 va 3" },
+  { variant: null, written: "Xatolik va To'g'ri" }
+];
 
-function checkCode() {
-  const code = document.getElementById("testCode").value;
-  if(!tests[code]) {
-    alert("❌ Noto‘g‘ri kod");
-    return;
-  }
-  test = tests[code];
-  document.getElementById("codePanel").classList.add("hidden");
-  document.getElementById("testPanel").classList.remove("hidden");
-  render();
+let total = adminTest.length;
+let current = 0;
+let userAnswers = [];
+let selectedVariant = null;
+
+function showQuestion() {
+  document.getElementById("qTitle").innerText = `Savol ${current + 1} / ${total}`;
+  document.getElementById("written").value = "";
+  enableVariants(true);
+  selectedVariant = null;
 }
 
-function render() {
-  const q = test[index];
-  document.getElementById("progress").innerText =
-    `${test.length} / ${index+1}`;
-  document.getElementById("questionText").innerText =
-    `Savol ${index+1}`;
-
-  const box = document.getElementById("variants");
-  box.innerHTML = "";
-  selected = null;
-  document.getElementById("written").value = "";
-  document.getElementById("written").disabled = false;
-
-  for (let k in q.variants) {
-    if(q.variants[k]) {
-      const d = document.createElement("div");
-      d.className = "variant";
-      d.innerText = `${k}) ${q.variants[k]}`;
-      d.onclick = () => selectVariant(d, k);
-      box.appendChild(d);
-    }
-  }
-}
-
-function selectVariant(el, key) {
-  document.querySelectorAll(".variant").forEach(v => v.classList.remove("active"));
-  el.classList.add("active");
-  selected = key;
-  document.getElementById("written").value = "";
+function selectVariant(v) {
+  selectedVariant = v;
   document.getElementById("written").disabled = true;
+  highlightVariant(v);
 }
 
-function writtenTyped() {
-  if(document.getElementById("written").value.trim() !== "") {
-    document.querySelectorAll(".variant").forEach(v => v.classList.remove("active"));
-    selected = null;
+function writtenInput() {
+  const val = document.getElementById("written").value;
+  if (val.length > 0) {
+    enableVariants(false);
+    selectedVariant = null;
+    const parts = val.split(" va ").map(p => p.trim()).filter(p => p);
+    document.getElementById("written").value = parts.join(" va ");
+  } else {
+    enableVariants(true);
   }
+}
+
+function enableVariants(enable) {
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    b.disabled = !enable;
+  });
+  if (enable) document.getElementById("written").disabled = false;
+}
+
+function highlightVariant(v) {
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    if (b.innerText === v) b.classList.add("active");
+  });
 }
 
 function nextQuestion() {
-  const q = test[index];
-  let ok = false;
+  userAnswers.push({
+    variant: selectedVariant,
+    written: document.getElementById("written").value
+  });
 
-  if(selected) {
-    ok = q.correct.includes(selected);
+  current++;
+  if (current >= total) {
+    showResults();
   } else {
-    const txt = document.getElementById("written").value.trim().toLowerCase();
-    ok = q.correct.map(x=>x.toLowerCase()).includes(txt);
-  }
-
-  if(ok) score++;
-
-  index++;
-  if(index < test.length) {
-    render();
-  } else {
-    finish();
+    showQuestion();
   }
 }
 
-function finish() {
-  const ball = Math.round(800 * score / test.length);
-  let msg = `Test tugadi!\nBall: ${ball}/800\n`;
+function showResults() {
+  document.getElementById("questionPanel").classList.add("hidden");
+  document.getElementById("resultPanel").classList.remove("hidden");
 
-  if(ball >= 700) msg += "🎉 Tabriklaymiz!";
-  else if(ball >= 300) msg += "🙂 Yaxshi natija";
-  else msg += "😔 Afsus";
+  let resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+  let score = 0;
 
-  alert(msg);
-  location.reload();
+  for (let i = 0; i < total; i++) {
+    const adminAns = adminTest[i];
+    const userAns = userAnswers[i];
+
+    let variantCorrect = adminAns.variant === userAns.variant;
+    let writtenCorrect = adminAns.written === userAns.written;
+
+    if (variantCorrect || writtenCorrect) score++;
+
+    resultsDiv.innerHTML += `<div class="result">
+      <strong>Savol ${i+1}</strong><br>
+      Admin javobi: ${adminAns.variant ? adminAns.variant : adminAns.written}<br>
+      Sizning javobingiz: ${userAns.variant ? userAns.variant : userAns.written}<br>
+      Holat: <span class="${variantCorrect || writtenCorrect ? 'correct' : 'wrong'}">
+      ${variantCorrect || writtenCorrect ? '✅ To‘g‘ri' : '❌ Xato'}</span>
+    </div>`;
+  }
+
+  resultsDiv.innerHTML += `<h3>Ballingiz: ${score} / ${total}</h3>`;
 }
+
+// Boshlash
+showQuestion();
 </script>
+
 </body>
 </html>
