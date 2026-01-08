@@ -22,12 +22,12 @@ body {
 .hidden { display: none; }
 input, button {
   padding: 10px;
-  margin: 5px 0;
+  margin: 6px 0;
   width: 100%;
 }
 .variants button {
   width: 48%;
-  margin: 3px 1%;
+  margin: 4px 1%;
 }
 .active {
   background: #4caf50;
@@ -38,18 +38,22 @@ input, button {
 <body>
 
 <div class="container">
-<h2>Admin test yaratish</h2>
 
+<h2>🛠 Admin test yaratish</h2>
+
+<!-- START -->
 <div id="startPanel">
   <button onclick="startTest()">Test boshlash</button>
 </div>
 
+<!-- CONFIG -->
 <div id="configPanel" class="hidden">
-  <input id="testCode" placeholder="Test kodi" />
-  <input id="questionCount" type="number" placeholder="Nechta savol?" />
+  <input type="number" id="testCode" placeholder="Test kodi (faqat son)" />
+  <input type="number" id="questionCount" placeholder="Nechta savol?" />
   <button onclick="beginQuestions()">Davom etish</button>
 </div>
 
+<!-- QUESTIONS -->
 <div id="questionPanel" class="hidden">
   <h3 id="qTitle"></h3>
 
@@ -62,54 +66,60 @@ input, button {
   </div>
 
   <input
+    type="text"
     id="written"
-    placeholder="Yozma javoblar (masalan: 2 va 3 va x+1)"
+    placeholder="Yozma javob (masalan: 2 va 3)"
     oninput="writtenInput()"
   />
 
   <button onclick="nextQuestion()">Keyingi savol</button>
 </div>
+
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+let testCode = "";
 let total = 0;
 let current = 0;
 let selectedVariant = null;
-let testCode = "";
 let test = [];
 
+/* START */
 function startTest() {
-  startPanel.classList.add("hidden");
-  configPanel.classList.remove("hidden");
+  document.getElementById("startPanel").classList.add("hidden");
+  document.getElementById("configPanel").classList.remove("hidden");
 }
 
+/* CONFIG */
 function beginQuestions() {
   testCode = document.getElementById("testCode").value.trim();
-  total = +document.getElementById("questionCount").value;
+  total = Number(document.getElementById("questionCount").value);
 
   if (!testCode || !total) {
     alert("Test kodi va savol sonini kiriting!");
     return;
   }
 
-  configPanel.classList.add("hidden");
-  questionPanel.classList.remove("hidden");
+  document.getElementById("configPanel").classList.add("hidden");
+  document.getElementById("questionPanel").classList.remove("hidden");
   showQuestion();
 }
 
+/* QUESTION */
 function showQuestion() {
-  qTitle.innerText = `Savol ${current + 1} / ${total}`;
-  written.value = "";
-  selectedVariant = null;
+  document.getElementById("qTitle").innerText =
+    `Savol ${current + 1} / ${total}`;
+  document.getElementById("written").value = "";
   enableVariants(true);
+  selectedVariant = null;
 }
 
 function selectVariant(v) {
   selectedVariant = v;
-  written.disabled = true;
+  document.getElementById("written").disabled = true;
 
   document.querySelectorAll(".variants button").forEach(b => {
     b.classList.remove("active");
@@ -118,7 +128,8 @@ function selectVariant(v) {
 }
 
 function writtenInput() {
-  if (written.value.trim()) {
+  const input = document.getElementById("written");
+  if (input.value.length > 0) {
     enableVariants(false);
     selectedVariant = null;
   } else {
@@ -131,15 +142,20 @@ function enableVariants(enable) {
     b.disabled = !enable;
     b.classList.remove("active");
   });
-  written.disabled = !enable;
+  document.getElementById("written").disabled = !enable;
 }
 
+/* NEXT */
 function nextQuestion() {
-  // 🔥 MUHIM JOY — "va" bilan ajratish
-  const writtenAnswers = written.value
-    .split(" va ")
-    .map(x => x.trim())
-    .filter(x => x !== "");
+  let writtenRaw = document.getElementById("written").value.trim();
+
+  let writtenAnswers = [];
+  if (writtenRaw) {
+    writtenAnswers = writtenRaw
+      .split("va")
+      .map(x => x.trim())
+      .filter(x => x.length > 0);
+  }
 
   test.push({
     variant: selectedVariant,
@@ -148,16 +164,22 @@ function nextQuestion() {
 
   current++;
 
-  if (current >= total) finishTest();
-  else showQuestion();
+  if (current >= total) {
+    finishTest();
+  } else {
+    showQuestion();
+  }
 }
 
+/* FINISH */
 function finishTest() {
   tg.sendData(JSON.stringify({
     role: "admin",
     test_code: testCode,
+    total_questions: total,
     questions: test
   }));
+
   tg.close();
 }
 </script>
