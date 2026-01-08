@@ -3,26 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test Admin Panel</title>
+<title>📝 Test Admin Panel</title>
 <style>
-body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; }
-h1 { color: #2c3e50; }
-input, textarea, select, button { display: block; margin: 10px 0; padding: 8px; width: 100%; }
-button { background: #3498db; color: white; border: none; cursor: pointer; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7fb; padding: 20px; }
+h1 { color: #2c3e50; text-align: center; }
+input, textarea, select, button { display: block; margin: 10px 0; padding: 10px; width: 100%; font-size: 16px; }
+button { background: #3498db; color: white; border: none; cursor: pointer; border-radius: 5px; transition: 0.3s; }
 button:hover { background: #2980b9; }
-.card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+.card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+label { font-weight: bold; margin-top: 10px; }
 </style>
 </head>
 <body>
-<h1>📝 Test yaratish paneli</h1>
+
+<h1>📝 Test Yaratish Paneli</h1>
+
 <div class="card">
 <label>Test nomi:</label>
-<input type="text" id="testName">
+<input type="text" id="testName" placeholder="Test nomini kiriting">
 
 <label>Savol soni:</label>
-<input type="number" id="questionCount" min="1" max="1000">
+<input type="number" id="questionCount" min="1" max="1000" placeholder="Nechta savol qo'shmoqchisiz?">
 
-<button onclick="startTest()">Test yaratishni boshlash</button>
+<button onclick="startTest()">🚀 Test yaratishni boshlash</button>
 </div>
 
 <div id="questions"></div>
@@ -32,24 +35,31 @@ let questionsData = [];
 
 function startTest() {
     const count = parseInt(document.getElementById('questionCount').value);
+    if(!count || count < 1) return alert("❌ Iltimos, savol sonini to‘g‘ri kiriting!");
     const container = document.getElementById('questions');
     container.innerHTML = '';
     questionsData = [];
+
     for(let i=1; i<=count; i++){
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-            <h3>Savol ${i}</h3>
-            <textarea placeholder="Savol matni" id="q${i}"></textarea>
+            <h3>🔹 Savol ${i}</h3>
+            <textarea placeholder="Savol matni" id="q${i}" rows="2"></textarea>
+            <label>Variantlar (A-E):</label>
             <input placeholder="A variant" id="q${i}a">
             <input placeholder="B variant" id="q${i}b">
             <input placeholder="C variant" id="q${i}c">
             <input placeholder="D variant" id="q${i}d">
             <input placeholder="E variant" id="q${i}e">
-            <input placeholder="To'g'ri javob (misol: A yoki A va C)" id="q${i}correct">
+            <label>Yozma javob (agar bo'lsa):</label>
+            <input placeholder="Yozma javob" id="q${i}text">
+            <label>To'g'ri javob (misol: A yoki A va C yoki 2 va 5):</label>
+            <input placeholder="To'g'ri javobni kiriting" id="q${i}correct">
         `;
         container.appendChild(card);
     }
+
     const saveBtn = document.createElement('button');
     saveBtn.textContent = "💾 Testni saqlash";
     saveBtn.onclick = saveTest;
@@ -57,7 +67,9 @@ function startTest() {
 }
 
 function saveTest() {
-    const testName = document.getElementById('testName').value;
+    const testName = document.getElementById('testName').value.trim();
+    if(!testName) return alert("❌ Test nomini kiriting!");
+
     const count = parseInt(document.getElementById('questionCount').value);
     const test = [];
     for(let i=1;i<=count;i++){
@@ -70,15 +82,25 @@ function saveTest() {
                 document.getElementById(`q${i}d`).value,
                 document.getElementById(`q${i}e`).value
             ],
-            correct: document.getElementById(`q${i}correct`).value.split(' va ')
+            textAnswer: document.getElementById(`q${i}text`).value,
+            correct: document.getElementById(`q${i}correct`).value.split(' va ').map(c=>c.trim())
         });
     }
-    fetch('https://yourserver.com/save_test', { // URLni o'zgartiring
+
+    // testni bot serverga yuborish
+    fetch('https://yourserver.com/save_test', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({name:testName, questions:test})
-    }).then(res=>alert('✅ Test saqlandi!'));
+    })
+    .then(res=>{
+        alert('✅ Test saqlandi!');
+        // mini app linki uchun botga signal
+        fetch('https://yourserver.com/admin_notify', {method:'POST', body: testName})
+    })
+    .catch(err=>alert("❌ Xatolik yuz berdi!"));
 }
 </script>
+
 </body>
 </html>
