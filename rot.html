@@ -3,169 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🛠 Admin Test Panel</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Admin Test Panel</title>
 <style>
-    body {
-        font-family: 'Roboto', sans-serif;
-        background: linear-gradient(120deg, #f0f4ff, #e0eaff);
-        padding: 20px;
-        color: #333;
-    }
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    h1 {
-        text-align: center;
-        color: #007bff;
-        margin-bottom: 25px;
-    }
-    label { font-weight: 500; }
-    input[type="number"], input[type="text"] {
-        width: 100%;
-        padding: 10px;
-        margin: 5px 0 15px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-    }
-    button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        margin-top: 10px;
-    }
-    button:hover { background-color: #0056b3; }
-    .question-block { margin-top: 25px; border-top: 1px solid #ddd; padding-top: 20px; }
-    .variant-inputs { display: flex; gap: 10px; margin-bottom: 15px; }
-    .variant-inputs input { flex: 1; }
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6ff;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+.hidden { display: none; }
+input, button {
+  padding: 10px;
+  margin: 5px 0;
+  width: 100%;
+}
+.variants button {
+  width: 48%;
+  margin: 3px 1%;
+}
+.active {
+  background: #4caf50;
+  color: white;
+}
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
+
 <div class="container">
-    <h1>🛠 Admin Test Panel</h1>
 
-    <!-- Start Panel -->
-    <div id="startPanel">
-        <label>🚀 Test yaratishni boshlash uchun tugmani bosing:</label>
-        <button id="startBtn">Start</button>
-    </div>
+<h2 id="hello">👋 Salom Islom aka</h2>
 
-    <!-- Test Configuration -->
-    <div id="testPanel" style="display:none;">
-        <label>📌 Necha savol qo'shmoqchisiz?</label>
-        <input type="number" id="totalQuestions" placeholder="Masalan: 5">
-        <button id="setQuestionsBtn">✅ Savol sonini tasdiqlash</button>
-    </div>
+<div id="startPanel">
+  <p>Test tuzasizmi?</p>
+  <button onclick="startTest()">Start</button>
+</div>
 
-    <!-- Question Input Panel -->
-    <div id="questionPanel" style="display:none;">
-        <div class="question-counter">Savol 1</div>
-        <div class="question-block">
-            <label>A/B/C/D/E javoblarni kiriting:</label>
-            <div class="variant-inputs">
-                <input type="text" id="variantA" placeholder="A">
-                <input type="text" id="variantB" placeholder="B">
-                <input type="text" id="variantC" placeholder="C">
-                <input type="text" id="variantD" placeholder="D">
-                <input type="text" id="variantE" placeholder="E">
-            </div>
-            <label>✍ Yozma javob (bir nechta bo‘lsa 'va' bilan ajrating):</label>
-            <input type="text" id="writtenAnswer" placeholder="Masalan: 2 va 5">
+<div id="configPanel" class="hidden">
+  <input type="number" id="questionCount" placeholder="Nechta savol?" />
+  <input type="number" id="testCode" placeholder="Test kodi (faqat son)" />
+  <button onclick="beginQuestions()">Keyingi</button>
+</div>
 
-            <button id="nextQuestionBtn">➡ Keyingi savol</button>
-            <button id="saveTestBtn" style="background:#28a745;">💾 Testni saqlash</button>
-        </div>
-    </div>
+<div id="questionPanel" class="hidden">
+  <h3 id="qTitle"></h3>
+
+  <div class="variants">
+    <button onclick="selectVariant('A')">A</button>
+    <button onclick="selectVariant('B')">B</button>
+    <button onclick="selectVariant('C')">C</button>
+    <button onclick="selectVariant('D')">D</button>
+    <button onclick="selectVariant('E')">E</button>
+  </div>
+
+  <input type="text" id="written" placeholder="Yozma javob (2 va 3)" oninput="writtenInput()" />
+
+  <button onclick="nextQuestion()">Keyingi savol</button>
+</div>
+
 </div>
 
 <script>
-let totalQuestions = 0;
-let currentQuestion = 1;
-let testData = [];
+let total = 0;
+let current = 0;
+let test = [];
+let selectedVariant = null;
 
-// Panels
-const startPanel = document.getElementById('startPanel');
-const testPanel = document.getElementById('testPanel');
-const questionPanel = document.getElementById('questionPanel');
-const questionCounter = document.querySelector('.question-counter');
-
-// Start button
-document.getElementById('startBtn').addEventListener('click', () => {
-    startPanel.style.display = 'none';
-    testPanel.style.display = 'block';
-});
-
-// Set total questions
-document.getElementById('setQuestionsBtn').addEventListener('click', () => {
-    totalQuestions = parseInt(document.getElementById('totalQuestions').value);
-    if(totalQuestions > 0) {
-        testPanel.style.display = 'none';
-        questionPanel.style.display = 'block';
-        questionCounter.innerText = `Savol ${currentQuestion}`;
-    } else {
-        alert('Iltimos, savol sonini kiriting!');
-    }
-});
-
-// Next question
-document.getElementById('nextQuestionBtn').addEventListener('click', () => {
-    saveCurrentQuestion();
-    if(currentQuestion < totalQuestions){
-        currentQuestion++;
-        questionCounter.innerText = `Savol ${currentQuestion}`;
-        clearInputs();
-    } else {
-        alert('📌 Barcha savollar kiritildi. "Testni saqlash" tugmasini bosing.');
-    }
-});
-
-// Save test
-document.getElementById('saveTestBtn').addEventListener('click', () => {
-    saveCurrentQuestion();
-    // Test ma'lumotlarini localStorage ga saqlash
-    localStorage.setItem('adminTestData', JSON.stringify(testData));
-    alert('✅ Test saqlandi! Bot orqali mijozga yuborishga tayyor. 🎉');
-    // Test tugagach, start tugmasini qayta ko'rsatish
-    startPanel.style.display = 'block';
-    questionPanel.style.display = 'none';
-    testPanel.style.display = 'none';
-    currentQuestion = 1;
-    testData = [];
-});
-
-// Save current question
-function saveCurrentQuestion(){
-    const question = {
-        variants: {
-            A: document.getElementById('variantA').value,
-            B: document.getElementById('variantB').value,
-            C: document.getElementById('variantC').value,
-            D: document.getElementById('variantD').value,
-            E: document.getElementById('variantE').value,
-        },
-        writtenAnswer: document.getElementById('writtenAnswer').value
-    };
-    testData[currentQuestion - 1] = question;
+function startTest() {
+  document.getElementById("startPanel").classList.add("hidden");
+  document.getElementById("configPanel").classList.remove("hidden");
 }
 
-// Clear inputs
-function clearInputs(){
-    document.getElementById('variantA').value = '';
-    document.getElementById('variantB').value = '';
-    document.getElementById('variantC').value = '';
-    document.getElementById('variantD').value = '';
-    document.getElementById('variantE').value = '';
-    document.getElementById('writtenAnswer').value = '';
+function beginQuestions() {
+  total = +document.getElementById("questionCount").value;
+  if (!total) return alert("Savol sonini kiriting!");
+  document.getElementById("configPanel").classList.add("hidden");
+  document.getElementById("questionPanel").classList.remove("hidden");
+  showQuestion();
+}
+
+function showQuestion() {
+  document.getElementById("qTitle").innerText = `Savol ${current + 1} / ${total}`;
+  document.getElementById("written").value = "";
+  enableVariants(true);
+  selectedVariant = null;
+}
+
+function selectVariant(v) {
+  selectedVariant = v;
+  document.getElementById("written").disabled = true;
+  highlightVariant(v);
+}
+
+function writtenInput() {
+  const val = document.getElementById("written").value;
+  if (val.length > 0) {
+    enableVariants(false);
+    selectedVariant = null;
+  } else {
+    enableVariants(true);
+  }
+}
+
+function enableVariants(enable) {
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    b.disabled = !enable;
+  });
+  document.getElementById("written").disabled = false;
+}
+
+function highlightVariant(v) {
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    if (b.innerText === v) b.classList.add("active");
+  });
+}
+
+function nextQuestion() {
+  test.push({
+    variant: selectedVariant,
+    written: document.getElementById("written").value
+  });
+
+  current++;
+  if (current >= total) {
+    alert("Test tugadi ✅");
+    window.close();
+  } else {
+    showQuestion();
+  }
 }
 </script>
+
 </body>
 </html>
