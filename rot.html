@@ -43,6 +43,7 @@ input, button {
 <h2 id="hello">Test boshlaymizmi?</h2>
 
 <div id="startPanel">
+  <p>Startni bosing va testni tuzishni boshlang</p>
   <button onclick="startTest()">Start</button>
 </div>
 
@@ -63,7 +64,7 @@ input, button {
     <button onclick="selectVariant('E')">E</button>
   </div>
 
-  <input type="text" id="written" placeholder="Yozma javob" oninput="writtenInput()" />
+  <input type="text" id="written" placeholder="Yozma javob (ko‘p javob bo‘lsa 'va' bilan ajratiladi)" oninput="writtenInput()" />
 
   <button onclick="nextQuestion()">Keyingi savol</button>
 </div>
@@ -107,6 +108,10 @@ function writtenInput() {
   if (val.length > 0) {
     enableVariants(false);
     selectedVariant = null;
+
+    // "va" qo'shish funksiyasi
+    const parts = val.split(" va ").map(p => p.trim()).filter(p => p);
+    document.getElementById("written").value = parts.join(" va ");
   } else {
     enableVariants(true);
   }
@@ -117,7 +122,7 @@ function enableVariants(enable) {
     b.classList.remove("active");
     b.disabled = !enable;
   });
-  document.getElementById("written").disabled = false;
+  if (enable) document.getElementById("written").disabled = false;
 }
 
 function highlightVariant(v) {
@@ -136,9 +141,8 @@ function nextQuestion() {
   current++;
   if (current >= total) {
     alert("Test tugadi ✅");
-    // Mini app'dan chiqish
-    window.close();
-    console.log("Test ma'lumotlari:", { testCode: document.getElementById("testCode").value, questions: test });
+    console.log("Admin test ma'lumotlari:", test); // Botga yuborish uchun shu ma'lumotlar ishlatiladi
+    window.close(); // Mini app dan chiqadi
   } else {
     showQuestion();
   }
