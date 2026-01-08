@@ -3,82 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test Admin Panel</title>
+<title>🚀 Mini Test App</title>
 <style>
-body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; }
-h1 { color: #2c3e50; }
-input, textarea, select, button { display: block; margin: 10px 0; padding: 8px; width: 100%; }
-button { background: #3498db; color: white; border: none; cursor: pointer; }
-button:hover { background: #2980b9; }
-.card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f7; padding: 20px; }
+h1,h2,h3 { color: #2c3e50; text-align: center; }
+input, textarea, select, button { display: block; margin: 10px 0; padding: 10px; width: 100%; font-size: 16px; }
+button { background: #27ae60; color: white; border: none; cursor: pointer; border-radius: 5px; transition: 0.3s; }
+button:hover { background: #219150; }
+.card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.progress { text-align: right; font-weight: bold; margin-bottom: 10px; }
 </style>
 </head>
 <body>
-<h1>📝 Test yaratish paneli</h1>
-<div class="card">
-<label>Test nomi:</label>
-<input type="text" id="testName">
 
-<label>Savol soni:</label>
-<input type="number" id="questionCount" min="1" max="1000">
+<h1>🚀 Mini Test App</h1>
 
-<button onclick="startTest()">Test yaratishni boshlash</button>
+<div id="startDiv" class="card">
+<label>Ism:</label>
+<input type="text" id="userName" placeholder="Ismingizni kiriting">
+<label>Familiya:</label>
+<input type="text" id="userSurname" placeholder="Familiyangizni kiriting">
+<button onclick="startUserTest()">🎯 Testni boshlash</button>
 </div>
 
-<div id="questions"></div>
+<div id="testDiv" style="display:none;"></div>
 
 <script>
-let questionsData = [];
+let testData = []; // Admin tomonidan yaratgan test
+let currentQ = 0;
+let userAnswers = [];
 
-function startTest() {
-    const count = parseInt(document.getElementById('questionCount').value);
-    const container = document.getElementById('questions');
-    container.innerHTML = '';
-    questionsData = [];
-    for(let i=1; i<=count; i++){
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <h3>Savol ${i}</h3>
-            <textarea placeholder="Savol matni" id="q${i}"></textarea>
-            <input placeholder="A variant" id="q${i}a">
-            <input placeholder="B variant" id="q${i}b">
-            <input placeholder="C variant" id="q${i}c">
-            <input placeholder="D variant" id="q${i}d">
-            <input placeholder="E variant" id="q${i}e">
-            <input placeholder="To'g'ri javob (misol: A yoki A va C)" id="q${i}correct">
-        `;
-        container.appendChild(card);
-    }
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = "💾 Testni saqlash";
-    saveBtn.onclick = saveTest;
-    container.appendChild(saveBtn);
+// Bu misol uchun, test serverdan yuklanadi
+fetch('https://yourserver.com/get_test') 
+.then(res=>res.json())
+.then(data=>{testData = data.questions});
+
+function startUserTest() {
+    const name = document.getElementById('userName').value.trim();
+    const surname = document.getElementById('userSurname').value.trim();
+    if(!name || !surname) return alert("❌ Iltimos, ism va familiyangizni kiriting!");
+    document.getElementById('startDiv').style.display = 'none';
+    document.getElementById('testDiv').style.display = 'block';
+    showQuestion();
 }
 
-function saveTest() {
-    const testName = document.getElementById('testName').value;
-    const count = parseInt(document.getElementById('questionCount').value);
-    const test = [];
-    for(let i=1;i<=count;i++){
-        test.push({
-            question: document.getElementById(`q${i}`).value,
-            options: [
-                document.getElementById(`q${i}a`).value,
-                document.getElementById(`q${i}b`).value,
-                document.getElementById(`q${i}c`).value,
-                document.getElementById(`q${i}d`).value,
-                document.getElementById(`q${i}e`).value
-            ],
-            correct: document.getElementById(`q${i}correct`).value.split(' va ')
+function showQuestion() {
+    const div = document.getElementById('testDiv');
+    div.innerHTML = '';
+    if(currentQ >= testData.length) return finishTest();
+
+    const q = testData[currentQ];
+    div.innerHTML += `<div class="progress">Savol ${currentQ+1}/${testData.length}</div>`;
+    div.innerHTML += `<h3>🔹 ${q.question}</h3>`;
+
+    if(q.options.some(opt=>opt)) {
+        q.options.forEach((opt, i)=>{
+            if(opt) div.innerHTML += `<label><input type="radio" name="opt" value="${String.fromCharCode(65+i)}"> ${opt}</label>`;
         });
     }
-    fetch('https://yourserver.com/save_test', { // URLni o'zgartiring
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({name:testName, questions:test})
-    }).then(res=>alert('✅ Test saqlandi!'));
+
+    if(q.textAnswer) {
+        div.innerHTML += `<textarea id="textAns" placeholder="Yozma javob"></textarea>`;
+    }
+
+    div.innerHTML += `<button onclick="nextQuestion()">➡ Keyingi</button>`;
+}
+
+function nextQuestion() {
+    const q = testData[currentQ];
+    let answer = [];
+    const radio = document.querySelector('input[name="opt"]:checked');
+    if(radio) answer.push(radio.value);
+    const text = document.getElementById('textAns');
+    if(text && text.value.trim()) answer.push(text.value.trim());
+    userAnswers.push(answer);
+    currentQ++;
+    showQuestion();
+}
+
+function finishTest() {
+    alert("✅ Test tugadi! Ball hisoblanmoqda...");
+    // Ball hisoblash: har bir to'g'ri javob 100/testData.length ball
+    let score = 0;
+    for(let i=0;i<testData.length;i++){
+        const correct = testData[i].correct;
+        const ans = userAnswers[i] || [];
+        if(ans.length === correct.length && ans.every(a=>correct.includes(a))) score += 100/testData.length;
+    }
+    score = Math.round(score);
+    alert(`🎉 Siz ${score} ball oldingiz!`);
+    // Ballni botga yuborish
+    fetch('https://yourserver.com/send_score', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name: document.getElementById('userName').value, score})
+    });
+    document.getElementById('testDiv').innerHTML = `<h2>Test tugadi! 🎯</h2><p>Siz ${score} ball oldingiz. Yana testga kirish uchun startni bosing.</p>`;
+    document.getElementById('startDiv').style.display = 'block';
+    currentQ=0; userAnswers=[];
 }
 </script>
+
 </body>
 </html>
