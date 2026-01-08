@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mijoz Test Panel</title>
+<title>Test Topshirish</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -22,21 +22,16 @@ body {
 .hidden { display: none; }
 input, button {
   padding: 10px;
-  margin: 5px 0;
+  margin: 6px 0;
   width: 100%;
 }
 .variants button {
   width: 48%;
-  margin: 3px 1%;
+  margin: 4px 1%;
 }
 .active {
-  background: #4caf50;
+  background: #2196f3;
   color: white;
-}
-.result {
-  background: #e3f2fd;
-  padding: 10px;
-  border-radius: 8px;
 }
 </style>
 </head>
@@ -44,16 +39,23 @@ input, button {
 
 <div class="container">
 
-<h2>Mijoz test topshirish</h2>
+<h2>📝 Test topshirish</h2>
 
-<!-- TEST CODE -->
-<div id="codePanel">
-  <input type="number" id="testCodeInput" placeholder="Test kodini kiriting">
-  <button onclick="sendTestCode()">Testni boshlash</button>
+<!-- LOGIN -->
+<div id="loginPanel">
+  <input id="testCode" placeholder="Test kodi" />
+  <input id="fullname" placeholder="Ism Familiya" />
+  <button onclick="confirmStart()">Davom etish</button>
 </div>
 
-<!-- QUESTION -->
-<div id="questionPanel" class="hidden">
+<!-- CONFIRM -->
+<div id="confirmPanel" class="hidden">
+  <p id="confirmText"></p>
+  <button onclick="startTest()">Testni boshlash</button>
+</div>
+
+<!-- TEST -->
+<div id="testPanel" class="hidden">
   <h3 id="qTitle"></h3>
 
   <div class="variants">
@@ -67,17 +69,11 @@ input, button {
   <input
     type="text"
     id="written"
-    placeholder="Yozma javob (masalan: 2 va 3 yoki x²+1)"
+    placeholder="Yozma javob (masalan: 2 va 3)"
     oninput="writtenInput()"
-  >
+  />
 
   <button onclick="nextQuestion()">Keyingi</button>
-</div>
-
-<!-- RESULT -->
-<div id="resultPanel" class="hidden">
-  <h3>Natija</h3>
-  <div id="resultText" class="result"></div>
 </div>
 
 </div>
@@ -86,51 +82,51 @@ input, button {
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-let adminData = null;
+let testCode = "";
+let fullname = "";
 let current = 0;
-let userAnswers = [];
+let total = 0;
+let scorePerQuestion = 0;
 let selectedVariant = null;
-let totalQuestions = 0;
-let perQuestionScore = 0;
-let score = 0;
+let answers = [];
 
-/* TEST CODE SEND */
-function sendTestCode() {
-  const code = document.getElementById("testCodeInput").value;
-  if (!code) {
-    alert("Test kodini kiriting!");
+/* STEP 1 */
+function confirmStart() {
+  testCode = document.getElementById("testCode").value.trim();
+  fullname = document.getElementById("fullname").value.trim();
+
+  if (!testCode || !fullname) {
+    alert("Test kodi va ismni kiriting!");
     return;
   }
 
-  tg.sendData(JSON.stringify({
-    role: "user",
-    test_code: code
-  }));
+  document.getElementById("loginPanel").classList.add("hidden");
+  document.getElementById("confirmPanel").classList.remove("hidden");
+
+  document.getElementById("confirmText").innerText =
+    `${fullname}, testni boshlaymizmi?`;
 }
 
-/* ADMIN DATA QABUL QILISH */
-tg.onEvent("message", function() {
-  const data = JSON.parse(tg.initDataUnsafe?.web_app_data?.data || "{}");
+/* STEP 2 */
+function startTest() {
+  // admin tomonidan botdan yuboriladi
+  // hozircha demo: bot testni boshlaganda total yuboradi
+  total = 20; // bot buni almashtiradi
+  scorePerQuestion = 800 / total;
 
-  if (!data.questions) return;
-
-  adminData = data;
-  totalQuestions = adminData.questions.length;
-  perQuestionScore = 800 / totalQuestions;
-
-  document.getElementById("codePanel").classList.add("hidden");
-  document.getElementById("questionPanel").classList.remove("hidden");
+  document.getElementById("confirmPanel").classList.add("hidden");
+  document.getElementById("testPanel").classList.remove("hidden");
 
   showQuestion();
-});
+}
 
-/* QUESTION */
+/* QUESTIONS */
 function showQuestion() {
   document.getElementById("qTitle").innerText =
-    `Savol ${current + 1} / ${totalQuestions}`;
+    `Savol ${current + 1} / ${total}`;
   document.getElementById("written").value = "";
-  enableVariants(true);
   selectedVariant = null;
+  enableVariants(true);
 }
 
 function selectVariant(v) {
@@ -163,58 +159,40 @@ function enableVariants(enable) {
 
 /* NEXT */
 function nextQuestion() {
-  userAnswers.push({
+  let raw = document.getElementById("written").value.trim();
+  let writtenAnswers = [];
+
+  if (raw) {
+    writtenAnswers = raw
+      .split("va")
+      .map(x => x.trim())
+      .filter(x => x);
+  }
+
+  answers.push({
     variant: selectedVariant,
-    written: document.getElementById("written").value.trim()
+    written_answers: writtenAnswers,
+    score: scorePerQuestion
   });
 
-  checkAnswer();
-
   current++;
-  if (current >= totalQuestions) {
-    showResult();
+
+  if (current >= total) {
+    finishTest();
   } else {
     showQuestion();
   }
 }
 
-/* ANSWER CHECK */
-function checkAnswer() {
-  const adminQ = adminData.questions[current];
-  const userQ = userAnswers[current];
-
-  let correct = false;
-
-  // Variant tekshirish
-  if (adminQ.variant && adminQ.variant === userQ.variant) {
-    correct = true;
-  }
-
-  // Written tekshirish (va bilan)
-  if (adminQ.written_answers && userQ.written) {
-    const parts = userQ.written
-      .split("va")
-      .map(p => p.trim());
-
-    for (let p of parts) {
-      if (adminQ.written_answers.includes(p)) {
-        correct = true;
-      }
-    }
-  }
-
-  if (correct) {
-    score += perQuestionScore;
-  }
-}
-
-/* RESULT */
-function showResult() {
-  document.getElementById("questionPanel").classList.add("hidden");
-  document.getElementById("resultPanel").classList.remove("hidden");
-
-  document.getElementById("resultText").innerHTML =
-    `Sizning natijangiz: <b>${Math.round(score)} / 800</b>`;
+/* FINISH */
+function finishTest() {
+  tg.sendData(JSON.stringify({
+    role: "client",
+    test_code: testCode,
+    fullname: fullname,
+    answers: answers
+  }));
+  tg.close();
 }
 </script>
 
