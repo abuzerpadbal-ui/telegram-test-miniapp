@@ -1,17 +1,174 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test ishlash</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2ff;
+}
+.container {
+  max-width: 700px;
+  margin: 30px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+.hidden { display: none; }
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.variants button {
+  width: 48%;
+  margin: 4px 1%;
+}
+
+.active {
+  background: #2563eb;
+  color: white;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h2>🧑‍🎓 Test ishlash</h2>
+
+<!-- 1-qadam: ism familiya -->
+<div id="userPanel">
+  <input id="fullname" placeholder="Ism Familiya">
+  <input id="testCode" placeholder="Test kodi">
+  <button onclick="startTest()">Boshlash</button>
+</div>
+
+<!-- 2-qadam: savollar -->
+<div id="testPanel" class="hidden">
+  <h3 id="qTitle"></h3>
+
+  <div class="variants">
+    <button onclick="selectVariant('A')">A</button>
+    <button onclick="selectVariant('B')">B</button>
+    <button onclick="selectVariant('C')">C</button>
+    <button onclick="selectVariant('D')">D</button>
+    <button onclick="selectVariant('E')">E</button>
+  </div>
+
+  <input id="written" placeholder="Yozma javob (masalan: 2 va 4)">
+  <button onclick="nextQuestion()">Keyingi</button>
+</div>
+
+<!-- 3-qadam: yakun -->
+<div id="finishPanel" class="hidden">
+  <h3>✅ Test yakunlandi</h3>
+  <p id="resultText"></p>
+  <button onclick="sendResult()">Natijani yuborish</button>
+</div>
+
+</div>
+
 <script>
-async function startTest() {
-  const code = document.getElementById("testCode").value;
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
-  const res = await fetch(
-    `http://SERVER_IP:5000/client/get_test/${code}`
-  );
+let fullname = "";
+let testCode = "";
+let current = 0;
+let totalQuestions = 10; // vaqtincha (backenddan keladi)
+let answers = [];
+let selectedVariant = null;
 
-  if (!res.ok) {
-    alert("Test topilmadi");
+// boshlash
+function startTest() {
+  fullname = document.getElementById("fullname").value.trim();
+  testCode = document.getElementById("testCode").value.trim();
+
+  if (!fullname || !testCode) {
+    alert("Ism va test kodini kiriting!");
     return;
   }
 
-  const data = await res.json();
-  loadTest(data);
+  document.getElementById("userPanel").classList.add("hidden");
+  document.getElementById("testPanel").classList.remove("hidden");
+  showQuestion();
+}
+
+// savol ko‘rsatish
+function showQuestion() {
+  document.getElementById("qTitle").innerText =
+    `Savol ${current + 1} / ${totalQuestions}`;
+  document.getElementById("written").value = "";
+  selectedVariant = null;
+  document.querySelectorAll(".variants button")
+    .forEach(b => b.classList.remove("active"));
+}
+
+// variant
+function selectVariant(v) {
+  selectedVariant = v;
+  document.getElementById("written").value = "";
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    if (b.innerText === v) b.classList.add("active");
+  });
+}
+
+// keyingi
+function nextQuestion() {
+  const raw = document.getElementById("written").value.trim();
+
+  let written_answers = [];
+  if (raw) {
+    written_answers = raw
+      .split("va")
+      .map(x => x.trim())
+      .filter(x => x);
+  }
+
+  answers.push({
+    variant: selectedVariant,
+    written_answers: written_answers
+  });
+
+  current++;
+
+  if (current >= totalQuestions) {
+    finishTest();
+  } else {
+    showQuestion();
+  }
+}
+
+// yakun
+function finishTest() {
+  document.getElementById("testPanel").classList.add("hidden");
+  document.getElementById("finishPanel").classList.remove("hidden");
+  document.getElementById("resultText").innerText =
+    `Ism: ${fullname}\nTest kodi: ${testCode}\nJavoblar soni: ${answers.length}`;
+}
+
+// botga yuborish
+function sendResult() {
+  tg.sendData(JSON.stringify({
+    role: "client",
+    fullname: fullname,
+    test_code: testCode,
+    answers: answers
+  }));
+  tg.close();
 }
 </script>
+
+</body>
+</html>
