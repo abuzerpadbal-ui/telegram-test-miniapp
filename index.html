@@ -1,98 +1,17 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-body{font-family:Arial;background:#eef1ff}
-.container{max-width:800px;margin:auto;background:#fff;padding:20px;border-radius:12px}
-button,input{width:100%;padding:10px;margin:6px 0}
-.variants button{width:48%;margin:4px 1%}
-.active{background:#2196f3;color:white}
-</style>
-</head>
-
-<body>
-<div class="container">
-
-<div id="user">
-  <input id="fname" placeholder="Ismingiz">
-  <input id="lname" placeholder="Familiyangiz">
-  <button onclick="begin()">Davom etish</button>
-</div>
-
-<div id="test" style="display:none">
-  <h3 id="title"></h3>
-  <div class="variants">
-    <button onclick="pick('A')">A</button>
-    <button onclick="pick('B')">B</button>
-    <button onclick="pick('C')">C</button>
-    <button onclick="pick('D')">D</button>
-    <button onclick="pick('E')">E</button>
-  </div>
-  <input id="written" placeholder="Javob (masalan: 2 yoki 2 va 3)">
-  <button onclick="next()">Keyingi</button>
-</div>
-
-</div>
-
 <script>
-const tg = Telegram.WebApp;
-tg.expand();
+async function startTest() {
+  const code = document.getElementById("testCode").value;
 
-const code = new URLSearchParams(location.search).get("code");
+  const res = await fetch(
+    `http://SERVER_IP:5000/client/get_test/${code}`
+  );
 
-let fname="", lname="", cur=0, variant=null, answers=[];
+  if (!res.ok) {
+    alert("Test topilmadi");
+    return;
+  }
 
-function begin(){
-  fname=fnameInput.value;
-  lname=lnameInput.value;
-  if(!fname||!lname) return alert("Ism-familiya kerak!");
-  user.style.display="none";
-  test.style.display="block";
-  show();
-}
-
-function show(){
-  title.innerText=`Savol ${cur+1}`;
-  written.value="";
-  variant=null;
-  document.querySelectorAll(".variants button").forEach(b=>b.classList.remove("active"));
-}
-
-function pick(v){
-  variant=v;
-  document.querySelectorAll(".variants button").forEach(b=>{
-    b.classList.toggle("active", b.innerText===v);
-  });
-}
-
-function next(){
-  const raw=written.value;
-  const arr = raw ? raw.split("va").map(x=>x.trim()).filter(Boolean) : [];
-
-  answers.push({
-    variant:variant,
-    written_answers:arr
-  });
-
-  cur++;
-  if(cur>=1000) finish(); else show();
-}
-
-function finish(){
-  tg.sendData(JSON.stringify({
-    role:"client",
-    test_code:code,
-    first_name:fname,
-    last_name:lname,
-    answers:answers
-  }));
-  tg.close();
+  const data = await res.json();
+  loadTest(data);
 }
 </script>
-</body>
-</html>
