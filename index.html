@@ -1,172 +1,137 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test ishlash</title>
+  <meta charset="UTF-8">
+  <title>Test ishlash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #eef2ff;
-}
-.container {
-  max-width: 700px;
-  margin: 30px auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-.hidden { display: none; }
-
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  font-size: 16px;
-}
-
-.variants button {
-  width: 48%;
-  margin: 4px 1%;
-}
-
-.active {
-  background: #2563eb;
-  color: white;
-}
-</style>
+  <style>
+    body {
+      font-family: Arial;
+      background: #020617;
+      color: white;
+      padding: 20px;
+    }
+    .box {
+      max-width: 600px;
+      margin: auto;
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
-
 <body>
-<div class="container">
 
-<h2>🧑‍🎓 Test ishlash</h2>
+<div class="box">
 
-<!-- 1-qadam: ism familiya -->
-<div id="userPanel">
-  <input id="fullname" placeholder="Ism Familiya">
-  <input id="testCode" placeholder="Test kodi">
-  <button onclick="startTest()">Boshlash</button>
-</div>
-
-<!-- 2-qadam: savollar -->
-<div id="testPanel" class="hidden">
-  <h3 id="qTitle"></h3>
-
-  <div class="variants">
-    <button onclick="selectVariant('A')">A</button>
-    <button onclick="selectVariant('B')">B</button>
-    <button onclick="selectVariant('C')">C</button>
-    <button onclick="selectVariant('D')">D</button>
-    <button onclick="selectVariant('E')">E</button>
+  <!-- 1-qadam -->
+  <div id="step1">
+    <h2>🧑‍🎓 Test boshlash</h2>
+    <input id="name" placeholder="Ismingiz">
+    <input id="surname" placeholder="Familiyangiz">
+    <input id="code" placeholder="Test kodi (masalan: 20)">
+    <button onclick="loadTest()">Boshlash</button>
+    <p id="error"></p>
   </div>
 
-  <input id="written" placeholder="Yozma javob (masalan: 2 va 4)">
-  <button onclick="nextQuestion()">Keyingi</button>
-</div>
+  <!-- 2-qadam -->
+  <div id="step2" class="hidden">
+    <h3 id="question"></h3>
+    <div id="options"></div>
+    <button onclick="next()">Keyingi</button>
+  </div>
 
-<!-- 3-qadam: yakun -->
-<div id="finishPanel" class="hidden">
-  <h3>✅ Test yakunlandi</h3>
-  <p id="resultText"></p>
-  <button onclick="sendResult()">Natijani yuborish</button>
-</div>
+  <!-- 3-qadam -->
+  <div id="step3" class="hidden">
+    <h2>✅ Test tugadi</h2>
+    <p id="result"></p>
+  </div>
 
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
-
-let fullname = "";
-let testCode = "";
-let current = 0;
-let totalQuestions = 10; // vaqtincha (backenddan keladi)
+let test = null;
+let index = 0;
 let answers = [];
-let selectedVariant = null;
 
-// boshlash
-function startTest() {
-  fullname = document.getElementById("fullname").value.trim();
-  testCode = document.getElementById("testCode").value.trim();
+async function loadTest() {
+  const code = document.getElementById("code").value;
+  const error = document.getElementById("error");
 
-  if (!fullname || !testCode) {
-    alert("Ism va test kodini kiriting!");
+  error.innerText = "";
+
+  try {
+    const res = await fetch(`http://127.0.0.1:5000/client/get_test/${code}`);
+    if (!res.ok) {
+      error.innerText = "❌ Test topilmadi";
+      return;
+    }
+    test = await res.json();
+  } catch {
+    error.innerText = "❌ Serverga ulanib bo‘lmadi";
     return;
   }
 
-  document.getElementById("userPanel").classList.add("hidden");
-  document.getElementById("testPanel").classList.remove("hidden");
+  document.getElementById("step1").classList.add("hidden");
+  document.getElementById("step2").classList.remove("hidden");
   showQuestion();
 }
 
-// savol ko‘rsatish
 function showQuestion() {
-  document.getElementById("qTitle").innerText =
-    `Savol ${current + 1} / ${totalQuestions}`;
-  document.getElementById("written").value = "";
-  selectedVariant = null;
-  document.querySelectorAll(".variants button")
-    .forEach(b => b.classList.remove("active"));
-}
+  const q = test.questions[index];
+  document.getElementById("question").innerText =
+    `Savol ${index + 1}: ${q.question}`;
 
-// variant
-function selectVariant(v) {
-  selectedVariant = v;
-  document.getElementById("written").value = "";
-  document.querySelectorAll(".variants button").forEach(b => {
-    b.classList.remove("active");
-    if (b.innerText === v) b.classList.add("active");
+  const box = document.getElementById("options");
+  box.innerHTML = "";
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.innerText = opt;
+    btn.onclick = () => select(i);
+    box.appendChild(btn);
   });
 }
 
-// keyingi
-function nextQuestion() {
-  const raw = document.getElementById("written").value.trim();
+function select(i) {
+  answers[index] = i;
+  next();
+}
 
-  let written_answers = [];
-  if (raw) {
-    written_answers = raw
-      .split("va")
-      .map(x => x.trim())
-      .filter(x => x);
-  }
-
-  answers.push({
-    variant: selectedVariant,
-    written_answers: written_answers
-  });
-
-  current++;
-
-  if (current >= totalQuestions) {
-    finishTest();
+function next() {
+  index++;
+  if (index >= test.questions.length) {
+    finish();
   } else {
     showQuestion();
   }
 }
 
-// yakun
-function finishTest() {
-  document.getElementById("testPanel").classList.add("hidden");
-  document.getElementById("finishPanel").classList.remove("hidden");
-  document.getElementById("resultText").innerText =
-    `Ism: ${fullname}\nTest kodi: ${testCode}\nJavoblar soni: ${answers.length}`;
-}
+function finish() {
+  document.getElementById("step2").classList.add("hidden");
+  document.getElementById("step3").classList.remove("hidden");
 
-// botga yuborish
-function sendResult() {
-  tg.sendData(JSON.stringify({
-    role: "client",
-    fullname: fullname,
-    test_code: testCode,
-    answers: answers
-  }));
-  tg.close();
+  document.getElementById("result").innerText =
+    "Ism: " + document.getElementById("name").value +
+    "\nFamiliya: " + document.getElementById("surname").value +
+    "\nJavoblar saqlandi.";
 }
 </script>
 
