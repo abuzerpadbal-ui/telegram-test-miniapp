@@ -1,16 +1,158 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Test Panel</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f4ff;
+}
+.container {
+  max-width: 700px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+}
+.hidden { display: none; }
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  font-size: 16px;
+}
+
+.variants button {
+  width: 48%;
+  margin: 4px 1%;
+}
+
+.active {
+  background: #4caf50;
+  color: white;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h2>🛠 Admin — Test yaratish</h2>
+
+<!-- 1-QADAM -->
+<div id="configPanel">
+  <input id="testCode" placeholder="Test kodi (masalan: 22)">
+  <input id="questionCount" type="number" placeholder="Savollar soni">
+  <button onclick="startTest()">Davom etish</button>
+</div>
+
+<!-- 2-QADAM -->
+<div id="questionPanel" class="hidden">
+  <h3 id="qTitle"></h3>
+
+  <div class="variants">
+    <button onclick="selectVariant('A')">A</button>
+    <button onclick="selectVariant('B')">B</button>
+    <button onclick="selectVariant('C')">C</button>
+    <button onclick="selectVariant('D')">D</button>
+    <button onclick="selectVariant('E')">E</button>
+  </div>
+
+  <input id="written" placeholder="Yozma javob (masalan: 2 va 3)">
+
+  <button onclick="nextQuestion()">Keyingi savol</button>
+</div>
+
+</div>
+
 <script>
-async function finishTest() {
-  const res = await fetch("http://SERVER_IP:5000/admin/save_test", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      test_code: testCode,
-      total_score: 800,
-      questions: questions
-    })
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+let testCode = "";
+let total = 0;
+let current = 0;
+let questions = [];
+let selectedVariant = null;
+
+// 1-qadam
+function startTest() {
+  testCode = document.getElementById("testCode").value.trim();
+  total = Number(document.getElementById("questionCount").value);
+
+  if (!testCode || !total) {
+    alert("Test kodi va savol sonini kiriting!");
+    return;
+  }
+
+  document.getElementById("configPanel").classList.add("hidden");
+  document.getElementById("questionPanel").classList.remove("hidden");
+  showQuestion();
+}
+
+// savol
+function showQuestion() {
+  document.getElementById("qTitle").innerText =
+    `Savol ${current + 1} / ${total}`;
+  document.getElementById("written").value = "";
+  selectedVariant = null;
+  document.querySelectorAll(".variants button")
+    .forEach(b => b.classList.remove("active"));
+}
+
+function selectVariant(v) {
+  selectedVariant = v;
+  document.getElementById("written").value = "";
+  document.querySelectorAll(".variants button").forEach(b => {
+    b.classList.remove("active");
+    if (b.innerText === v) b.classList.add("active");
+  });
+}
+
+// keyingi
+function nextQuestion() {
+  const raw = document.getElementById("written").value.trim();
+
+  let written_answers = [];
+  if (raw) {
+    written_answers = raw
+      .split("va")
+      .map(x => x.trim())
+      .filter(x => x);
+  }
+
+  questions.push({
+    variant: selectedVariant,
+    written_answers: written_answers
   });
 
-  const data = await res.json();
-  alert("Test saqlandi! KOD: " + data.test_code);
+  current++;
+
+  if (current >= total) {
+    finishTest();
+  } else {
+    showQuestion();
+  }
+}
+
+// yakun
+function finishTest() {
+  tg.sendData(JSON.stringify({
+    role: "admin",
+    test_code: testCode,
+    total_score: 800,
+    questions: questions
+  }));
+  tg.close();
 }
 </script>
+
+</body>
+</html>
