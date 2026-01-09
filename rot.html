@@ -10,28 +10,56 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #f4f6ff;
+  background: linear-gradient(135deg, #eef2ff, #fdfbff);
 }
 .container {
-  max-width: 900px;
-  margin: auto;
+  max-width: 720px;
+  margin: 30px auto;
   background: white;
-  padding: 20px;
-  border-radius: 10px;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
+h2 { text-align: center; }
+
 .hidden { display: none; }
+
 input, button {
-  padding: 10px;
-  margin: 6px 0;
   width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover { background: #4338ca; }
+
+.variants {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 15px;
 }
 .variants button {
   width: 48%;
-  margin: 4px 1%;
+  margin: 1%;
+  background: #e5e7eb;
+  color: black;
 }
-.active {
-  background: #4caf50;
+.variants button.active {
+  background: #22c55e;
   color: white;
+}
+
+.note {
+  font-size: 13px;
+  color: #555;
+  margin-top: 6px;
 }
 </style>
 </head>
@@ -39,7 +67,7 @@ input, button {
 
 <div class="container">
 
-<h2>🛠 Admin test yaratish</h2>
+<h2>🛠 Admin Test Yaratish</h2>
 
 <!-- START -->
 <div id="startPanel">
@@ -48,9 +76,9 @@ input, button {
 
 <!-- CONFIG -->
 <div id="configPanel" class="hidden">
-  <input type="number" id="testCode" placeholder="Test kodi (faqat son)" />
-  <input type="number" id="questionCount" placeholder="Nechta savol?" />
-  <button onclick="beginQuestions()">Davom etish</button>
+  <input type="number" id="testCode" placeholder="Test kodi (masalan: 22)">
+  <input type="number" id="questionCount" placeholder="Savollar soni (masalan: 20)">
+  <button onclick="begin()">Davom etish</button>
 </div>
 
 <!-- QUESTIONS -->
@@ -58,19 +86,20 @@ input, button {
   <h3 id="qTitle"></h3>
 
   <div class="variants">
-    <button onclick="selectVariant('A')">A</button>
-    <button onclick="selectVariant('B')">B</button>
-    <button onclick="selectVariant('C')">C</button>
-    <button onclick="selectVariant('D')">D</button>
-    <button onclick="selectVariant('E')">E</button>
+    <button onclick="toggleVariant('A')">A</button>
+    <button onclick="toggleVariant('B')">B</button>
+    <button onclick="toggleVariant('C')">C</button>
+    <button onclick="toggleVariant('D')">D</button>
+    <button onclick="toggleVariant('E')">E</button>
   </div>
 
   <input
-    type="text"
     id="written"
-    placeholder="Yozma javob (masalan: 2 va 3)"
-    oninput="writtenInput()"
-  />
+    placeholder="Yozma javob (masalan: 2 va 3, x^2+1, √4)"
+  >
+  <div class="note">
+    Variant va yozma birga ishlaydi. Matematik belgilar ruxsat.
+  </div>
 
   <button onclick="nextQuestion()">Keyingi savol</button>
 </div>
@@ -89,72 +118,50 @@ let test = [];
 
 /* START */
 function startTest() {
-  document.getElementById("startPanel").classList.add("hidden");
-  document.getElementById("configPanel").classList.remove("hidden");
+  startPanel.classList.add("hidden");
+  configPanel.classList.remove("hidden");
 }
 
 /* CONFIG */
-function beginQuestions() {
-  testCode = document.getElementById("testCode").value.trim();
-  total = Number(document.getElementById("questionCount").value);
+function begin() {
+  testCode = testCodeInput.value.trim();
+  total = Number(questionCount.value);
 
   if (!testCode || !total) {
-    alert("Test kodi va savol sonini kiriting!");
+    alert("Test kodi va savollar sonini kiriting");
     return;
   }
 
-  document.getElementById("configPanel").classList.add("hidden");
-  document.getElementById("questionPanel").classList.remove("hidden");
+  configPanel.classList.add("hidden");
+  questionPanel.classList.remove("hidden");
   showQuestion();
 }
 
 /* QUESTION */
 function showQuestion() {
-  document.getElementById("qTitle").innerText =
-    `Savol ${current + 1} / ${total}`;
-  document.getElementById("written").value = "";
-  enableVariants(true);
+  qTitle.innerText = `Savol ${current + 1} / ${total}`;
+  written.value = "";
   selectedVariant = null;
+  document.querySelectorAll(".variants button").forEach(b => b.classList.remove("active"));
 }
 
-function selectVariant(v) {
-  selectedVariant = v;
-  document.getElementById("written").disabled = true;
-
+function toggleVariant(v) {
+  selectedVariant = (selectedVariant === v) ? null : v;
   document.querySelectorAll(".variants button").forEach(b => {
-    b.classList.remove("active");
-    if (b.innerText === v) b.classList.add("active");
+    b.classList.toggle("active", b.innerText === selectedVariant);
   });
-}
-
-function writtenInput() {
-  const input = document.getElementById("written");
-  if (input.value.length > 0) {
-    enableVariants(false);
-    selectedVariant = null;
-  } else {
-    enableVariants(true);
-  }
-}
-
-function enableVariants(enable) {
-  document.querySelectorAll(".variants button").forEach(b => {
-    b.disabled = !enable;
-    b.classList.remove("active");
-  });
-  document.getElementById("written").disabled = !enable;
 }
 
 /* NEXT */
 function nextQuestion() {
-  let writtenRaw = document.getElementById("written").value.trim();
-
+  let raw = written.value.trim();
   let writtenAnswers = [];
-  if (writtenRaw) {
-    writtenAnswers = writtenRaw
-      .split("va")
+
+  if (raw.length > 0) {
+    writtenAnswers = raw
+      .split(/va|,|;/i)
       .map(x => x.trim())
-      .filter(x => x.length > 0);
+      .filter(x => x);
   }
 
   test.push({
@@ -163,23 +170,18 @@ function nextQuestion() {
   });
 
   current++;
-
-  if (current >= total) {
-    finishTest();
-  } else {
-    showQuestion();
-  }
+  if (current >= total) finish();
+  else showQuestion();
 }
 
 /* FINISH */
-function finishTest() {
+function finish() {
   tg.sendData(JSON.stringify({
     role: "admin",
     test_code: testCode,
     total_questions: total,
     questions: test
   }));
-
   tg.close();
 }
 </script>
