@@ -3,156 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Test Panel</title>
-
+<title>Admin Panel</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f2f4ff;
-}
-.container {
-  max-width: 800px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-.hidden { display: none; }
-
-input, button {
-  width: 100%;
-  padding: 10px;
-  margin: 6px 0;
-}
-
-.variants button {
-  width: 48%;
-  margin: 4px 1%;
-}
-
-.active {
-  background: #4caf50;
-  color: white;
-}
+body { font-family: Arial; background:#f2f4ff; }
+.container { max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:12px; }
+button,input { width:100%; padding:10px; margin:6px 0; }
+.variants button { width:48%; margin:4px 1%; }
+.active { background:#4caf50; color:white; }
 </style>
 </head>
+
 <body>
-
 <div class="container">
-
 <h2>🛠 Admin test yaratish</h2>
 
-<!-- STEP 1 -->
-<div id="configPanel">
-  <input id="testCode" placeholder="Test kodi (masalan: 22)">
-  <input id="questionCount" type="number" placeholder="Savollar soni">
-  <button onclick="startQuestions()">Keyingi</button>
+<div id="step1">
+  <input id="code" placeholder="Test kodi (masalan: 20)">
+  <input id="count" type="number" placeholder="Savollar soni">
+  <button onclick="start()">Boshlash</button>
 </div>
 
-<!-- STEP 2 -->
-<div id="questionPanel" class="hidden">
-  <h3 id="qTitle"></h3>
+<div id="step2" style="display:none">
+  <h3 id="title"></h3>
 
   <div class="variants">
-    <button onclick="selectVariant('A')">A</button>
-    <button onclick="selectVariant('B')">B</button>
-    <button onclick="selectVariant('C')">C</button>
-    <button onclick="selectVariant('D')">D</button>
-    <button onclick="selectVariant('E')">E</button>
+    <button onclick="pick('A')">A</button>
+    <button onclick="pick('B')">B</button>
+    <button onclick="pick('C')">C</button>
+    <button onclick="pick('D')">D</button>
+    <button onclick="pick('E')">E</button>
   </div>
 
   <input id="written" placeholder="Yozma javob (masalan: 2 va 3)">
-
-  <button onclick="nextQuestion()">Keyingi savol</button>
+  <button onclick="next()">Keyingi</button>
 </div>
-
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
+const tg = Telegram.WebApp;
 tg.expand();
 
-let testCode = "";
-let totalQuestions = 0;
-let current = 0;
-let questions = [];
-let selectedVariant = null;
+let testCode="", total=0, cur=0, questions=[], variant=null;
 
-// ===== START =====
-function startQuestions() {
-  testCode = document.getElementById("testCode").value.trim();
-  totalQuestions = Number(document.getElementById("questionCount").value);
-
-  if (!testCode || !totalQuestions) {
-    alert("Test kodi va savol sonini kiriting!");
-    return;
-  }
-
-  document.getElementById("configPanel").classList.add("hidden");
-  document.getElementById("questionPanel").classList.remove("hidden");
-  showQuestion();
+function start(){
+  testCode = code.value.trim();
+  total = +count.value;
+  if(!testCode || !total) return alert("To‘ldir!");
+  step1.style.display="none";
+  step2.style.display="block";
+  show();
 }
 
-// ===== QUESTION =====
-function showQuestion() {
-  document.getElementById("qTitle").innerText =
-    `Savol ${current + 1} / ${totalQuestions}`;
-  document.getElementById("written").value = "";
-  selectedVariant = null;
-
-  document.querySelectorAll(".variants button")
-    .forEach(b => b.classList.remove("active"));
+function show(){
+  title.innerText = `Savol ${cur+1} / ${total}`;
+  written.value="";
+  variant=null;
+  document.querySelectorAll(".variants button").forEach(b=>b.classList.remove("active"));
 }
 
-function selectVariant(v) {
-  selectedVariant = v;
-  document.getElementById("written").value = "";
-
-  document.querySelectorAll(".variants button").forEach(b => {
-    b.classList.remove("active");
-    if (b.innerText === v) b.classList.add("active");
+function pick(v){
+  variant=v;
+  document.querySelectorAll(".variants button").forEach(b=>{
+    b.classList.toggle("active", b.innerText===v);
   });
 }
 
-// ===== NEXT =====
-function nextQuestion() {
-  const raw = document.getElementById("written").value.trim();
-
-  let written_answers = [];
-  if (raw) {
-    written_answers = raw
-      .split("va")
-      .map(x => x.trim())
-      .filter(Boolean);
-  }
+function next(){
+  const raw = written.value;
+  const arr = raw ? raw.split("va").map(x=>x.trim()).filter(Boolean) : [];
 
   questions.push({
-    variant: selectedVariant,
-    written_answers: written_answers
+    variant: variant,
+    written_answers: arr
   });
 
-  current++;
-
-  if (current >= totalQuestions) {
-    finishTest();
-  } else {
-    showQuestion();
-  }
+  cur++;
+  cur>=total ? finish() : show();
 }
 
-// ===== FINISH =====
-function finishTest() {
+function finish(){
   tg.sendData(JSON.stringify({
-    role: "admin",
-    test_code: testCode,
-    total_score: 800,
-    questions: questions
+    role:"admin",
+    test_code:testCode,
+    questions:questions
   }));
   tg.close();
 }
 </script>
-
 </body>
 </html>
